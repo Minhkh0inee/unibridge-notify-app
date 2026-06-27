@@ -1,35 +1,168 @@
 import { router } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppIcon, type AppIconName } from '@/components/app-icon';
+import { EscalatingReminder } from '@/components/escalating-reminder';
 import { Mascot } from '@/components/mascot';
 import { MedicationCard } from '@/components/medication-card';
 import { ProgressRing } from '@/components/progress-ring';
 import { BottomTabInset, Fonts, MobileFrameWidth } from '@/constants/theme';
 import { getNextDose, getScheduledDoses, getTodayProgress } from '@/data/schedule';
+import type { Medication } from '@/data/types';
 import { useActiveJourney } from '@/hooks/use-active-journey';
 import { useTheme } from '@/hooks/use-theme';
+import {
+  scheduleTestCarryNotificationAsync,
+  scheduleTestNotificationAsync,
+} from '@/notifications/notifications';
+import {
+  clearPendingReminderIntent,
+  getPendingReminderIntent,
+  subscribeToReminderIntents,
+  type ReminderIntent,
+} from '@/notifications/reminder-intent';
+
+interface ReminderTarget {
+  medication: Medication;
+  scheduledTime: string;
+}
+
+type TestAction = 'medication-notification' | 'carry-notification' | null;
 
 export default function HomeScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { journey, logs, loading } = useActiveJourney();
+  const { journey, logs, loading, refresh } = useActiveJourney();
+  const [reminderIntent, setReminderIntent] = useState<ReminderIntent | null>(() =>
+    getPendingReminderIntent()
+  );
+  const [reminderTarget, setReminderTarget] = useState<ReminderTarget | null>(null);
+  const [showReminder, setShowReminder] = useState(false);
+  const [testAction, setTestAction] = useState<TestAction>(null);
+  const [testStatus, setTestStatus] = useState<string | null>(null);
   const doses = getScheduledDoses(journey, logs);
   const progress = getTodayProgress(doses);
   const nextDose = getNextDose(doses);
   const progressValue = progress.total ? progress.done / progress.total : 0;
+  const testMedication = nextDose?.medication ?? journey?.medications[0];
+  const testScheduledTime =
+    nextDose?.time ?? testMedication?.reminderTimes[0];
+
+  useEffect(() => subscribeToReminderIntents(setReminderIntent), []);
+
+  useEffect(() => {
+    if (!journey || !reminderIntent) return;
+
+    const medication = journey.medications.find(
+      (item) => item.id === reminderIntent.medicationId
+    );
+    if (!medication) {
+      clearPendingReminderIntent(reminderIntent.notificationId);
+      setReminderIntent(null);
+      return;
+    }
+
+    setReminderTarget({
+      medication,
+      scheduledTime: reminderIntent.scheduledTime,
+    });
+    setShowReminder(true);
+    clearPendingReminderIntent(reminderIntent.notificationId);
+    setReminderIntent(null);
+  }, [journey, reminderIntent]);
+
+  function openReminder(medication: Medication, scheduledTime: string) {
+    setReminderTarget({ medication, scheduledTime });
+    setShowReminder(true);
+  }
+
+  function dismissReminder() {
+    setShowReminder(false);
+    setReminderTarget(null);
+    void refresh().catch(console.error);
+  }
+
+  function openTestReminder() {
+    if (!testMedication || !testScheduledTime) {
+      Alert.alert('Chưa có thuốc', 'Thêm ít nhất một thuốc để test reminder modal.');
+      return;
+    }
+
+    setTestStatus('Đã mở reminder modal trực tiếp.');
+    openReminder(testMedication, testScheduledTime);
+  }
+
+  async function testMedicationNotification() {
+    if (!testMedication || !testScheduledTime || testAction) return;
+
+    setTestAction('medication-notification');
+    setTestStatus(null);
+    try {
+      const result = await scheduleTestNotificationAsync(
+        testMedication,
+        testScheduledTime
+      );
+      const message = `Notification thuốc sẽ xuất hiện lúc ${result.scheduledFor.toLocaleTimeString()}.`;
+      setTestStatus(message);
+      Alert.alert(
+        'Đã đặt notification',
+        `${message} Hãy đưa app xuống nền để kiểm tra.`
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Không thể đặt notification.';
+      setTestStatus(message);
+      Alert.alert('Test thất bại', message);
+    } finally {
+      setTestAction(null);
+    }
+  }
+
+  async function testCarryNotification() {
+    if (testAction) return;
+
+    setTestAction('carry-notification');
+    setTestStatus(null);
+    try {
+      const scheduledFor = await scheduleTestCarryNotificationAsync();
+      const message = `Notification nhắc mang thuốc sẽ xuất hiện lúc ${scheduledFor.toLocaleTimeString()}.`;
+      setTestStatus(message);
+      Alert.alert(
+        'Đã đặt notification',
+        `${message} Hãy đưa app xuống nền để kiểm tra.`
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Không thể đặt notification.';
+      setTestStatus(message);
+      Alert.alert('Test thất bại', message);
+    } finally {
+      setTestAction(null);
+    }
+  }
 
   return (
-    <ScrollView
-      style={[styles.screen, { backgroundColor: theme.background }]}
-      contentContainerStyle={[
-        styles.content,
-        {
-          paddingTop: Math.max(insets.top, 16) + 16,
-          paddingBottom: insets.bottom + BottomTabInset + 130,
-        },
-      ]}>
+    <>
+      {journey && reminderTarget && (
+        <EscalatingReminder
+          visible={showReminder}
+          medication={reminderTarget.medication}
+          scheduledTime={reminderTarget.scheduledTime}
+          escalationConfig={journey.escalationConfig}
+          onDismiss={dismissReminder}
+        />
+      )}
+      <ScrollView
+        style={[styles.screen, { backgroundColor: theme.background }]}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingTop: Math.max(insets.top, 16) + 16,
+            paddingBottom: insets.bottom + BottomTabInset + 130,
+          },
+        ]}>
       <View style={styles.header}>
         <View style={styles.headerCopy}>
           <Text style={[styles.greeting, { color: theme.textSecondary }]}>Chào buổi sáng, Ngọc</Text>
@@ -94,7 +227,9 @@ export default function HomeScreen() {
               </View>
             </View>
             <View style={styles.nextActions}>
-              <Pressable style={({ pressed }) => [styles.confirmButton, pressed && styles.pressed]}>
+              <Pressable
+                onPress={() => openReminder(nextDose.medication, nextDose.time)}
+                style={({ pressed }) => [styles.confirmButton, pressed && styles.pressed]}>
                 <Text style={[styles.confirmText, { color: theme.primary }]}>Xác nhận uống</Text>
               </Pressable>
               <Pressable style={({ pressed }) => [styles.detailButton, pressed && styles.pressed]}>
@@ -112,6 +247,68 @@ export default function HomeScreen() {
         <QuickAction icon="bag" label="Nhắc mang" />
       </View>
 
+      <View
+        style={[
+          styles.testPanel,
+          {
+            backgroundColor: theme.backgroundElement,
+            borderColor: theme.border,
+          },
+        ]}>
+        <View style={styles.testPanelHeader}>
+          <View style={[styles.testBadge, { backgroundColor: theme.primarySoft }]}>
+            <Text style={[styles.testBadgeText, { color: theme.primary }]}>TEST LAB</Text>
+          </View>
+          <View style={styles.testPanelCopy}>
+            <Text style={[styles.testPanelTitle, { color: theme.text }]}>
+              Kiểm tra hệ thống nhắc
+            </Text>
+            <Text style={[styles.testPanelSubtitle, { color: theme.textSecondary }]}>
+              Notification được gửi sau 10 giây.
+            </Text>
+          </View>
+        </View>
+
+        <Pressable
+          accessibilityRole="button"
+          onPress={openTestReminder}
+          style={({ pressed }) => [
+            styles.testPrimaryButton,
+            {
+              backgroundColor: theme.text,
+              transform: [{ scale: pressed ? 0.985 : 1 }],
+            },
+          ]}>
+          <AppIcon name="bell" color={theme.background} size={16} />
+          <Text style={[styles.testPrimaryText, { color: theme.background }]}>
+            Mở reminder modal ngay
+          </Text>
+        </Pressable>
+
+        <View style={styles.testNotificationRow}>
+          <TestButton
+            icon="pill"
+            label="Notification thuốc"
+            loading={testAction === 'medication-notification'}
+            disabled={testAction !== null}
+            onPress={testMedicationNotification}
+          />
+          <TestButton
+            icon="bag"
+            label="Nhắc mang thuốc"
+            loading={testAction === 'carry-notification'}
+            disabled={testAction !== null}
+            onPress={testCarryNotification}
+          />
+        </View>
+
+        {testStatus && (
+          <Text style={[styles.testStatus, { color: theme.textSecondary }]}>
+            {testStatus}
+          </Text>
+        )}
+      </View>
+
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>Hôm nay</Text>
@@ -126,7 +323,46 @@ export default function HomeScreen() {
           ))}
         </View>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </>
+  );
+}
+
+function TestButton({
+  icon,
+  label,
+  loading,
+  disabled,
+  onPress,
+}: {
+  icon: AppIconName;
+  label: string;
+  loading: boolean;
+  disabled: boolean;
+  onPress: () => void;
+}) {
+  const theme = useTheme();
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.testSecondaryButton,
+        {
+          backgroundColor: theme.background,
+          borderColor: theme.border,
+          opacity: disabled && !loading ? 0.5 : 1,
+          transform: [{ scale: pressed ? 0.98 : 1 }],
+        },
+      ]}>
+      <AppIcon name={icon} color={theme.primary} size={15} />
+      <Text style={[styles.testSecondaryText, { color: theme.text }]}>
+        {loading ? 'Đang đặt…' : label}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -388,6 +624,82 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: 13,
     textAlign: 'center',
+  },
+  testPanel: {
+    borderRadius: 24,
+    borderWidth: 1,
+    gap: 10,
+    marginTop: 16,
+    padding: 16,
+  },
+  testPanelHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 2,
+  },
+  testBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+  },
+  testBadgeText: {
+    fontFamily: Fonts.mono,
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  testPanelCopy: {
+    flex: 1,
+  },
+  testPanelTitle: {
+    fontFamily: Fonts.sans,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  testPanelSubtitle: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  testPrimaryButton: {
+    alignItems: 'center',
+    borderRadius: 15,
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+    minHeight: 46,
+    paddingHorizontal: 14,
+  },
+  testPrimaryText: {
+    fontFamily: Fonts.sans,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  testNotificationRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  testSecondaryButton: {
+    alignItems: 'center',
+    borderRadius: 14,
+    borderWidth: 1,
+    flex: 1,
+    flexDirection: 'row',
+    gap: 6,
+    justifyContent: 'center',
+    minHeight: 44,
+    paddingHorizontal: 8,
+  },
+  testSecondaryText: {
+    flexShrink: 1,
+    fontSize: 10,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  testStatus: {
+    fontSize: 11,
+    lineHeight: 16,
+    paddingHorizontal: 2,
   },
   inlineLink: {
     alignItems: 'center',

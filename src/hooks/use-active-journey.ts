@@ -31,5 +31,20 @@ export function useActiveJourney() {
     };
   }, []);
 
-  return { journey, logs, loading };
+  async function refresh() {
+    setLoading(true);
+    try {
+      await seedIfNeeded();
+      const [activeJourney, weeklyLogs] = await Promise.all([
+        getActiveJourney(),
+        getWeeklyLogs(),
+      ]);
+      setJourney(activeJourney);
+      setLogs(weeklyLogs);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return { journey, logs, loading, refresh };
 }

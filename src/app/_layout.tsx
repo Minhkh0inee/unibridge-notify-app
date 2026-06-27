@@ -9,9 +9,16 @@ import { AnimatedSplashOverlay } from "@/components/animated-icon";
 import AppTabs from "@/components/app-tabs";
 import { Colors } from "@/constants/theme";
 import { seedIfNeeded } from "@/data/seed";
+import { getActiveJourney } from "@/data/storage";
+import {
+  scheduleCarryReminders,
+  scheduleJourneyNotificationsAsync,
+} from "@/notifications/notifications";
+import { useNotificationObserver } from "@/notifications/use-notification-observer";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  useNotificationObserver();
   const palette = Colors[colorScheme === "dark" ? "dark" : "light"];
   const navigationTheme: Theme = {
     dark: colorScheme === "dark",
@@ -32,7 +39,18 @@ export default function TabLayout() {
   };
 
   useEffect(() => {
-    seedIfNeeded().catch(console.error);
+    async function initializeReminders() {
+      await seedIfNeeded();
+      const journey = await getActiveJourney();
+      if (!journey) return;
+
+      await Promise.all([
+        scheduleJourneyNotificationsAsync(journey),
+        scheduleCarryReminders(),
+      ]);
+    }
+
+    initializeReminders().catch(console.error);
   }, []);
 
   return (
