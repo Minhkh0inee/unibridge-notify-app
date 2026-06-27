@@ -31,29 +31,29 @@ export function JourneyPresetCard({ preset, isSelected, onSelect }: JourneyPrese
       style={({ pressed }) => [
         styles.container,
         {
-          backgroundColor: theme.colors.card,
-          borderColor: isSelected ? theme.colors.primary : theme.colors.border,
+          backgroundColor: theme.card,
+          borderColor: isSelected ? theme.primary : theme.border,
         },
-        isSelected && { backgroundColor: theme.colors.primary + '20' },
+        isSelected && { backgroundColor: theme.primary + '20' },
         pressed && styles.pressed,
       ]}
     >
       {isSelected && (
-        <View style={[styles.checkmark, { backgroundColor: theme.colors.primary }]}>
+        <View style={[styles.checkmark, { backgroundColor: theme.primary }]}>
           <Text style={styles.checkmarkText}>✓</Text>
         </View>
       )}
 
-      <Text style={[styles.title, { color: theme.colors.text }]}>
+      <Text style={[styles.title, { color: theme.text }]}>
         {preset.name}
       </Text>
 
-      <Text style={[styles.description, { color: theme.colors.subtext }]}>
+      <Text style={[styles.description, { color: theme.subtext }]}>
         {getDescription()}
       </Text>
 
       {preset.escalation_intervals.length > 0 && (
-        <Text style={[styles.intervals, { color: theme.colors.subtext }]}>
+        <Text style={[styles.intervals, { color: theme.subtext }]}>
           Nhắc lại sau: {preset.escalation_intervals.join(', ')} phút
         </Text>
       )}

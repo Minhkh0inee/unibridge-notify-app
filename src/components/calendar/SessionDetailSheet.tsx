@@ -38,31 +38,31 @@ export function SessionDetailSheet({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: theme.colors.text }]}>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>
             {SESSION_LABELS[session]}
           </Text>
           <Pressable onPress={onClose} style={styles.closeButton}>
-            <Text style={[styles.closeText, { color: theme.colors.text }]}>✕</Text>
+            <Text style={[styles.closeText, { color: theme.text }]}>✕</Text>
           </Pressable>
         </View>
 
         <ScrollView style={styles.content}>
           <View style={styles.section}>
-            <Text style={[styles.sectionLabel, { color: theme.colors.subtext }]}>
+            <Text style={[styles.sectionLabel, { color: theme.subtext }]}>
               Giờ uống
             </Text>
-            <Text style={[styles.timeText, { color: theme.colors.text }]}>
+            <Text style={[styles.timeText, { color: theme.text }]}>
               {targetTime}
             </Text>
-            <Text style={[styles.windowText, { color: theme.colors.subtext }]}>
+            <Text style={[styles.windowText, { color: theme.subtext }]}>
               Khung giờ hợp lệ: {validWindow}
             </Text>
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.sectionLabel, { color: theme.colors.subtext }]}>
+            <Text style={[styles.sectionLabel, { color: theme.subtext }]}>
               Danh sách thuốc
             </Text>
             <View style={styles.medicationList}>
@@ -73,7 +73,7 @@ export function SessionDetailSheet({
                     dosage={`${schedule.medication?.dosage_amount} ${schedule.medication?.dosage_unit}`}
                   />
                   {schedule.medication?.food_instruction && (
-                    <Text style={[styles.instructionText, { color: theme.colors.subtext }]}>
+                    <Text style={[styles.instructionText, { color: theme.subtext }]}>
                       {schedule.medication.food_instruction === 'before' && 'Trước ăn'}
                       {schedule.medication.food_instruction === 'after' && 'Sau ăn'}
                       {schedule.medication.food_instruction === 'during' && 'Trong khi ăn'}
@@ -86,14 +86,14 @@ export function SessionDetailSheet({
 
           {journeyConfig && (
             <View style={styles.section}>
-              <Text style={[styles.sectionLabel, { color: theme.colors.subtext }]}>
+              <Text style={[styles.sectionLabel, { color: theme.subtext }]}>
                 Cấu hình nhắc nhở
               </Text>
-              <View style={[styles.journeyCard, { backgroundColor: theme.colors.card }]}>
-                <Text style={[styles.journeyName, { color: theme.colors.text }]}>
+              <View style={[styles.journeyCard, { backgroundColor: theme.card }]}>
+                <Text style={[styles.journeyName, { color: theme.text }]}>
                   {journeyConfig.name}
                 </Text>
-                <Text style={[styles.journeyDetail, { color: theme.colors.subtext }]}>
+                <Text style={[styles.journeyDetail, { color: theme.subtext }]}>
                   Nhắc {journeyConfig.escalation_intervals.length + 1} lần
                 </Text>
               </View>
@@ -104,7 +104,7 @@ export function SessionDetailSheet({
         <View style={styles.footer}>
           <Pressable
             onPress={onEditJourney}
-            style={[styles.editButton, { backgroundColor: theme.colors.primary }]}
+            style={[styles.editButton, { backgroundColor: theme.primary }]}
           >
             <Text style={styles.editButtonText}>Chỉnh lịch nhắc</Text>
           </Pressable>

@@ -42,7 +42,7 @@ export function DailyAgenda({ date, onSessionPress }: DailyAgendaProps) {
   if (!hasAnySchedules) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={[styles.emptyText, { color: theme.colors.subtext }]}>
+        <Text style={[styles.emptyText, { color: theme.subtext }]}>
           Không có lịch uống thuốc hôm nay
         </Text>
       </View>

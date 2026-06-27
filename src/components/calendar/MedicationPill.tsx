@@ -14,11 +14,11 @@ export function MedicationPill({ name, dosage, size = 'medium' }: MedicationPill
   const isSmall = size === 'small';
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.card }]}>
+    <View style={[styles.container, { backgroundColor: theme.card }]}>
       <Text
         style={[
           styles.name,
-          { color: theme.colors.text },
+          { color: theme.text },
           isSmall && styles.nameSmall
         ]}
         numberOfLines={1}
@@ -28,7 +28,7 @@ export function MedicationPill({ name, dosage, size = 'medium' }: MedicationPill
       <Text
         style={[
           styles.dosage,
-          { color: theme.colors.subtext },
+          { color: theme.subtext },
           isSmall && styles.dosageSmall
         ]}
       >

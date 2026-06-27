@@ -26,7 +26,7 @@ export function SessionCard({ session, schedules, onPress }: SessionCardProps) {
       onPress={onPress}
       style={({ pressed }) => [
         styles.container,
-        { backgroundColor: theme.colors.card, borderLeftColor: sessionColor },
+        { backgroundColor: theme.card, borderLeftColor: sessionColor },
         pressed && styles.pressed,
       ]}
     >
@@ -36,7 +36,7 @@ export function SessionCard({ session, schedules, onPress }: SessionCardProps) {
             {sessionLabel}
           </Text>
         </View>
-        <Text style={[styles.time, { color: theme.colors.text }]}>
+        <Text style={[styles.time, { color: theme.text }]}>
           {targetTime}
         </Text>
       </View>
@@ -53,7 +53,7 @@ export function SessionCard({ session, schedules, onPress }: SessionCardProps) {
       </View>
 
       {schedules[0]?.journey_config && (
-        <Text style={[styles.journeyLabel, { color: theme.colors.subtext }]}>
+        <Text style={[styles.journeyLabel, { color: theme.subtext }]}>
           {schedules[0].journey_config.name}
         </Text>
       )}

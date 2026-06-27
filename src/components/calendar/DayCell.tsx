@@ -28,22 +28,22 @@ export function DayCell({
       disabled={isDisabled}
       style={({ pressed }) => [
         styles.container,
-        isSelected && { backgroundColor: theme.colors.primary },
-        isToday && !isSelected && { borderWidth: 2, borderColor: theme.colors.primary },
+        isSelected && { backgroundColor: theme.primary },
+        isToday && !isSelected && { borderWidth: 2, borderColor: theme.primary },
         pressed && !isDisabled && styles.pressed,
       ]}
     >
       <Text
         style={[
           styles.dayText,
-          { color: isDisabled ? theme.colors.subtext : theme.colors.text },
+          { color: isDisabled ? theme.subtext : theme.text },
           isSelected && { color: '#FFFFFF' },
         ]}
       >
         {day}
       </Text>
       {hasSchedules && !isDisabled && (
-        <View style={[styles.indicator, { backgroundColor: isSelected ? '#FFFFFF' : theme.colors.primary }]} />
+        <View style={[styles.indicator, { backgroundColor: isSelected ? '#FFFFFF' : theme.primary }]} />
       )}
     </Pressable>
   );

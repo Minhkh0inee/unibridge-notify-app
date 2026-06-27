@@ -57,19 +57,19 @@ export function CalendarGrid({ selectedDate, onDateSelect }: CalendarGridProps) 
     <View style={styles.container}>
       <View style={styles.header}>
         <Pressable onPress={goToPreviousMonth} style={styles.navButton}>
-          <Text style={[styles.navText, { color: theme.colors.text }]}>‹</Text>
+          <Text style={[styles.navText, { color: theme.text }]}>‹</Text>
         </Pressable>
-        <Text style={[styles.monthLabel, { color: theme.colors.text }]}>
+        <Text style={[styles.monthLabel, { color: theme.text }]}>
           {monthLabel}
         </Text>
         <Pressable onPress={goToNextMonth} style={styles.navButton}>
-          <Text style={[styles.navText, { color: theme.colors.text }]}>›</Text>
+          <Text style={[styles.navText, { color: theme.text }]}>›</Text>
         </Pressable>
       </View>
 
       <View style={styles.weekdays}>
         {['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'].map((day) => (
-          <Text key={day} style={[styles.weekdayText, { color: theme.colors.subtext }]}>
+          <Text key={day} style={[styles.weekdayText, { color: theme.subtext }]}>
             {day}
           </Text>
         ))}
