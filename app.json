@@ -12,6 +12,9 @@
       "bundleIdentifier": "com.minhkhoi09012003.unibridge-notify-app"
     },
     "android": {
+      "permissions": [
+        "SCHEDULE_EXACT_ALARM"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -26,6 +29,14 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Cho phép UniBridge chụp ảnh để xác nhận bạn đã uống thuốc.",
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": false
+        }
+      ],
       [
         "expo-notifications",
         {
