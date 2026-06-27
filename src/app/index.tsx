@@ -1,5 +1,4 @@
 import * as Device from 'expo-device';
-import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Platform, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,6 +14,12 @@ import { seedIfNeeded } from '@/data/seed';
 import { getActiveJourney } from '@/data/storage';
 import type { Journey, Medication } from '@/data/types';
 import { scheduleTestNotificationAsync } from '@/notifications/notifications';
+import {
+  clearPendingReminderIntent,
+  getPendingReminderIntent,
+  subscribeToReminderIntents,
+  type ReminderIntent,
+} from '@/notifications/reminder-intent';
 
 interface ReminderTarget {
   medication: Medication;
@@ -41,12 +46,10 @@ function getDevMenuHint() {
 }
 
 export default function HomeScreen() {
-  const { reminderMedicationId, reminderScheduledTime, notificationId } = useLocalSearchParams<{
-    reminderMedicationId?: string;
-    reminderScheduledTime?: string;
-    notificationId?: string;
-  }>();
   const [journey, setJourney] = useState<Journey | null>(null);
+  const [reminderIntent, setReminderIntent] = useState<ReminderIntent | null>(() =>
+    getPendingReminderIntent()
+  );
   const [reminderTarget, setReminderTarget] = useState<ReminderTarget | null>(null);
   const [showReminder, setShowReminder] = useState(false);
   const [isSchedulingTest, setIsSchedulingTest] = useState(false);
@@ -70,19 +73,31 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
-    if (!journey || !reminderMedicationId || !reminderScheduledTime || !notificationId) return;
+    return subscribeToReminderIntents(setReminderIntent);
+  }, []);
 
-    const medication = journey.medications.find((item) => item.id === reminderMedicationId);
+  useEffect(() => {
+    if (!journey || !reminderIntent) return;
+
+    const medication = journey.medications.find(
+      (item) => item.id === reminderIntent.medicationId
+    );
     if (!medication) {
       if (__DEV__) {
-        console.warn(`Medication from notification was not found: ${reminderMedicationId}`);
+        console.warn(
+          `Medication from notification was not found: ${reminderIntent.medicationId}`
+        );
       }
+      clearPendingReminderIntent(reminderIntent.notificationId);
+      setReminderIntent(null);
       return;
     }
 
-    setReminderTarget({ medication, scheduledTime: reminderScheduledTime });
+    setReminderTarget({ medication, scheduledTime: reminderIntent.scheduledTime });
     setShowReminder(true);
-  }, [journey, notificationId, reminderMedicationId, reminderScheduledTime]);
+    clearPendingReminderIntent(reminderIntent.notificationId);
+    setReminderIntent(null);
+  }, [journey, reminderIntent]);
 
   function openManualReminder() {
     const medication = journey?.medications[0];
@@ -96,10 +111,6 @@ export default function HomeScreen() {
   function dismissReminder() {
     setShowReminder(false);
     setReminderTarget(null);
-
-    if (notificationId) {
-      router.replace('/');
-    }
   }
 
   async function scheduleTenSecondTest() {
@@ -114,7 +125,7 @@ export default function HomeScreen() {
       setNotificationStatus('Scheduled — notification will fire in 10 seconds.');
       Alert.alert(
         'Notification scheduled',
-        `It will fire at ${result.scheduledFor.toLocaleTimeString()}. Put the app in the background, then tap the notification.`
+        `It will fire at ${result.scheduledFor.toLocaleTimeString()}. Put the app in the background. Press and hold the notification to see its actions.`
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to schedule notification.';

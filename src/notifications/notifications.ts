@@ -5,9 +5,12 @@ import { Platform } from 'react-native';
 import type { Journey, Medication } from '@/data/types';
 
 const MEDICATION_CHANNEL_ID = 'medication-reminders';
+const MEDICATION_CATEGORY_ID = 'medicationReminder';
 const SCHEDULED_IDS_KEY = 'medication_notification_ids_v1';
 
 export const MEDICATION_NOTIFICATION_TYPE = 'medication-reminder';
+export const OPEN_REMINDER_ACTION = 'OPEN_REMINDER';
+export const SNOOZE_REMINDER_ACTION = 'SNOOZE_REMINDER';
 
 export interface MedicationNotificationData extends Record<string, unknown> {
   type: typeof MEDICATION_NOTIFICATION_TYPE;
@@ -45,10 +48,40 @@ async function ensureAndroidChannelAsync(): Promise<void> {
   });
 }
 
+async function ensureMedicationCategoryAsync(): Promise<void> {
+  if (Platform.OS === 'web') return;
+
+  await Notifications.setNotificationCategoryAsync(
+    MEDICATION_CATEGORY_ID,
+    [
+      {
+        identifier: OPEN_REMINDER_ACTION,
+        buttonTitle: 'Open Reminder',
+        options: {
+          opensAppToForeground: true,
+        },
+      },
+      {
+        identifier: SNOOZE_REMINDER_ACTION,
+        buttonTitle: 'Remind in 5 min',
+        options: {
+          opensAppToForeground: true,
+        },
+      },
+    ],
+    {
+      previewPlaceholder: 'Medication reminder',
+      categorySummaryFormat: '%u medication reminders',
+      showTitle: true,
+      showSubtitle: true,
+    }
+  );
+}
+
 export async function requestNotificationPermissionsAsync(): Promise<boolean> {
   if (Platform.OS === 'web') return false;
 
-  await ensureAndroidChannelAsync();
+  await Promise.all([ensureAndroidChannelAsync(), ensureMedicationCategoryAsync()]);
 
   const current = await Notifications.getPermissionsAsync();
   if (current.granted) return true;
@@ -85,10 +118,13 @@ function notificationContent(
   };
 
   return {
-    title: 'Time to take your medicine',
-    body: `${medication.name} — ${medication.dosage}`,
+    title: '💊 Time for your medicine',
+    subtitle: `${medication.name} · ${scheduledTime}`,
+    body: `Take ${medication.dosage}. Open this reminder to confirm your dose.`,
     data,
     sound: 'default',
+    categoryIdentifier: MEDICATION_CATEGORY_ID,
+    interruptionLevel: 'active',
     priority: Notifications.AndroidNotificationPriority.MAX,
   };
 }
@@ -179,6 +215,35 @@ export async function scheduleTestNotificationAsync(
   }
 
   return { identifier, scheduledFor };
+}
+
+export async function snoozeMedicationNotificationAsync(
+  notification: Notifications.Notification,
+  seconds = 5 * 60
+): Promise<string> {
+  const data = getMedicationNotificationData(notification);
+  if (!data) {
+    throw new Error('The notification does not contain medication reminder data.');
+  }
+
+  const content = notification.request.content;
+  return Notifications.scheduleNotificationAsync({
+    content: {
+      title: content.title,
+      subtitle: content.subtitle,
+      body: content.body,
+      data,
+      sound: 'default',
+      categoryIdentifier: MEDICATION_CATEGORY_ID,
+      interruptionLevel: 'active',
+      priority: Notifications.AndroidNotificationPriority.MAX,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+      seconds,
+      channelId: MEDICATION_CHANNEL_ID,
+    },
+  });
 }
 
 export function getMedicationNotificationData(
