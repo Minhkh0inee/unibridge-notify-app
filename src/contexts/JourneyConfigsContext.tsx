@@ -34,6 +34,7 @@ export function JourneyConfigsProvider({ children }: { children: React.ReactNode
       const data = await journeysService.getAll();
       setJourneyConfigs(data);
     } catch (err) {
+      console.error('JourneyConfigsContext fetchConfigs error:', err);
       setError(err as Error);
     } finally {
       setIsLoading(false);

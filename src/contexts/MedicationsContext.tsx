@@ -32,6 +32,7 @@ export function MedicationsProvider({ children }: { children: React.ReactNode })
       const data = await medicationsService.getAll();
       setMedications(data);
     } catch (err) {
+      console.error('MedicationsContext fetchMedications error:', err);
       setError(err as Error);
     } finally {
       setIsLoading(false);

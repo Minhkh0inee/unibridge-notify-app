@@ -34,6 +34,7 @@ export function SchedulesProvider({ children }: { children: React.ReactNode }) {
       const data = await schedulesService.getAll();
       setSchedules(data);
     } catch (err) {
+      console.error('SchedulesContext fetchSchedules error:', err);
       setError(err as Error);
     } finally {
       setIsLoading(false);
