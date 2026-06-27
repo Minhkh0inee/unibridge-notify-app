@@ -1,6 +1,13 @@
+import {
+  Tabs,
+  TabList,
+  TabTrigger,
+  TabSlot,
+  TabTriggerSlotProps,
+  TabListProps,
+} from 'expo-router/ui';
 import { SymbolView } from 'expo-symbols';
 import { Pressable, useColorScheme, View, StyleSheet } from 'react-native';
-import { Link, usePathname, Slot } from 'expo-router';
 
 import { ExternalLink } from './external-link';
 import { ThemedText } from './themed-text';
@@ -9,35 +16,24 @@ import { ThemedView } from './themed-view';
 import { Colors, MaxContentWidth, Spacing } from '@/constants/theme';
 
 export default function AppTabs() {
-  const pathname = usePathname();
-
   return (
-    <View style={{ flex: 1 }}>
-      <Slot />
-      <CustomTabList>
-        <Link href="/" asChild>
-          <TabButton isFocused={pathname === '/'}>Home</TabButton>
-        </Link>
-        <Link href="/calendar" asChild>
-          <TabButton isFocused={pathname === '/calendar'}>Lịch thuốc</TabButton>
-        </Link>
-        <Link href="/explore" asChild>
-          <TabButton isFocused={pathname === '/explore'}>Explore</TabButton>
-        </Link>
-      </CustomTabList>
-    </View>
+    <Tabs>
+      <TabSlot style={{ height: '100%' }} />
+      <TabList asChild>
+        <CustomTabList>
+          <TabTrigger name="home" href="/" asChild>
+            <TabButton>Home</TabButton>
+          </TabTrigger>
+          <TabTrigger name="explore" href="/explore" asChild>
+            <TabButton>Explore</TabButton>
+          </TabTrigger>
+        </CustomTabList>
+      </TabList>
+    </Tabs>
   );
 }
 
-export function TabButton({
-  children,
-  isFocused,
-  ...props
-}: {
-  children: React.ReactNode;
-  isFocused: boolean;
-  [key: string]: any;
-}) {
+export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps) {
   return (
     <Pressable {...props} style={({ pressed }) => pressed && styles.pressed}>
       <ThemedView
@@ -51,13 +47,7 @@ export function TabButton({
   );
 }
 
-export function CustomTabList({
-  children,
-  ...props
-}: {
-  children: React.ReactNode;
-  [key: string]: any;
-}) {
+export function CustomTabList(props: TabListProps) {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
 
@@ -68,7 +58,7 @@ export function CustomTabList({
           Expo Starter
         </ThemedText>
 
-        {children}
+        {props.children}
 
         <ExternalLink href="https://docs.expo.dev" asChild>
           <Pressable style={styles.externalPressable}>
