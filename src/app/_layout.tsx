@@ -1,16 +1,15 @@
-import {
-  ThemeProvider,
-  type Theme,
-} from "@react-navigation/native";
+import { ThemeProvider, type Theme } from "@react-navigation/native";
+import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { useColorScheme } from "react-native";
 
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
-import AppTabs from "@/components/app-tabs";
 import { Colors } from "@/constants/theme";
 import { seedIfNeeded } from "@/data/seed";
+import { getActiveJourney } from "@/data/storage";
+import { scheduleJourneyNotificationsAsync } from "@/notifications/notifications";
 
-export default function TabLayout() {
+export default function RootLayout() {
   const colorScheme = useColorScheme();
   const palette = Colors[colorScheme === "dark" ? "dark" : "light"];
   const navigationTheme: Theme = {
@@ -32,13 +31,21 @@ export default function TabLayout() {
   };
 
   useEffect(() => {
-    seedIfNeeded().catch(console.error);
+    async function initializeApp() {
+      await seedIfNeeded();
+      const journey = await getActiveJourney();
+      if (journey) {
+        await scheduleJourneyNotificationsAsync(journey);
+      }
+    }
+
+    initializeApp().catch(console.error);
   }, []);
 
   return (
     <ThemeProvider value={navigationTheme}>
       <AnimatedSplashOverlay />
-      <AppTabs />
+      <Stack screenOptions={{ headerShown: false }} />
     </ThemeProvider>
   );
 }

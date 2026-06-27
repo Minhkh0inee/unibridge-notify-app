@@ -31,3 +31,8 @@ export interface DoseLog {
   photoUri?: string;
   status: DoseStatus;
 }
+
+export interface CarryLog {
+  date: string; // "YYYY-MM-DD"
+  confirmedAt: string; // ISO 8601
+}
