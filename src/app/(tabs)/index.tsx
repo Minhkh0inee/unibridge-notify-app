@@ -1,4 +1,5 @@
 import * as Device from 'expo-device';
+import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Platform, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -200,6 +201,14 @@ export default function HomeScreen() {
           </>
         )}
 
+        <Pressable
+          onPress={() => router.push('/create-journey')}
+          style={[styles.testButton, styles.createJourneyButton]}>
+          <ThemedText type="smallBold" style={styles.testButtonText}>
+            + Create Journey
+          </ThemedText>
+        </Pressable>
+
         {Platform.OS === 'web' && <WebBadge />}
       </SafeAreaView>
     </ThemedView>
@@ -259,5 +268,8 @@ const styles = StyleSheet.create({
   },
   statusText: {
     textAlign: 'center',
+  },
+  createJourneyButton: {
+    backgroundColor: '#22C55E',
   },
 });
