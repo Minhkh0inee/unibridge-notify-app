@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { sevenDaysAgo } from '@/utils/date';
 
-import type { DoseLog, Journey } from './types';
+import type { CarryLog, DoseLog, Journey } from './types';
 
 export const JOURNEY_KEY = 'active_journey';
 export const ALL_JOURNEYS_KEY = 'all_journeys';
@@ -35,4 +35,24 @@ async function readDoseLogs(): Promise<DoseLog[]> {
   const raw = await AsyncStorage.getItem(DOSE_LOGS_KEY);
   if (!raw) return [];
   return JSON.parse(raw) as DoseLog[];
+}
+
+const CARRY_LOGS_KEY = 'carry_logs';
+
+export async function saveCarryLog(log: CarryLog): Promise<void> {
+  const logs = await readCarryLogs();
+  logs.push(log);
+  await AsyncStorage.setItem(CARRY_LOGS_KEY, JSON.stringify(logs));
+}
+
+export async function getTodayCarryLog(): Promise<CarryLog | null> {
+  const today = new Date().toISOString().slice(0, 10);
+  const logs = await readCarryLogs();
+  return logs.find((log) => log.date === today) ?? null;
+}
+
+async function readCarryLogs(): Promise<CarryLog[]> {
+  const raw = await AsyncStorage.getItem(CARRY_LOGS_KEY);
+  if (!raw) return [];
+  return JSON.parse(raw) as CarryLog[];
 }

@@ -31,3 +31,10 @@ export interface DoseLog {
   photoUri?: string;
   status: DoseStatus;
 }
+
+export interface CarryLog {
+  /** Local calendar date formatted as YYYY-MM-DD. */
+  date: string;
+  /** ISO 8601 datetime when the user confirmed their medication was packed. */
+  confirmedAt: string;
+}
