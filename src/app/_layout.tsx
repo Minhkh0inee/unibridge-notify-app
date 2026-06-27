@@ -9,6 +9,10 @@ import { useColorScheme } from "react-native";
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
 import AppTabs from "@/components/app-tabs";
 import { seedIfNeeded } from "@/data/seed";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { MedicationsProvider } from "@/contexts/MedicationsContext";
+import { SchedulesProvider } from "@/contexts/SchedulesContext";
+import { JourneyConfigsProvider } from "@/contexts/JourneyConfigsContext";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -19,8 +23,16 @@ export default function TabLayout() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
+      <AuthProvider>
+        <MedicationsProvider>
+          <SchedulesProvider>
+            <JourneyConfigsProvider>
+              <AnimatedSplashOverlay />
+              <AppTabs />
+            </JourneyConfigsProvider>
+          </SchedulesProvider>
+        </MedicationsProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
