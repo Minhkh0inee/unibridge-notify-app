@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { useTheme } from '@/hooks/use-theme';
-import { Spacing } from '@/constants/theme';
+import { Spacing, BorderRadius, FontSizes, FontWeights } from '@/constants/theme';
 
 interface DayCellProps {
   day: number;
@@ -22,28 +22,52 @@ export function DayCell({
 }: DayCellProps) {
   const theme = useTheme();
 
+  // Clear visual hierarchy: selected > today > has schedules > default
+  const getBackgroundColor = () => {
+    if (isSelected) return theme.accent;
+    if (isToday) return theme.accentTint;
+    return 'transparent';
+  };
+
+  const getTextColor = () => {
+    if (isDisabled) return theme.textSecondary;
+    if (isSelected) return '#FFFFFF';
+    if (isToday) return theme.accent;
+    return theme.text;
+  };
+
+  const getBorderStyle = () => {
+    // Only show border for today if NOT selected
+    if (isToday && !isSelected) {
+      return {
+        borderWidth: 2,
+        borderColor: theme.accent,
+      };
+    }
+    return {};
+  };
+
   return (
     <Pressable
       onPress={onPress}
       disabled={isDisabled}
       style={({ pressed }) => [
         styles.container,
-        isSelected && { backgroundColor: theme.primary },
-        isToday && !isSelected && { borderWidth: 2, borderColor: theme.primary },
+        { backgroundColor: getBackgroundColor() },
+        getBorderStyle(),
         pressed && !isDisabled && styles.pressed,
       ]}
     >
       <Text
         style={[
           styles.dayText,
-          { color: isDisabled ? theme.subtext : theme.text },
-          isSelected && { color: '#FFFFFF' },
+          { color: getTextColor() },
         ]}
       >
         {day}
       </Text>
       {hasSchedules && !isDisabled && (
-        <View style={[styles.indicator, { backgroundColor: isSelected ? '#FFFFFF' : theme.primary }]} />
+        <View style={[styles.indicator, { backgroundColor: isSelected ? '#FFFFFF' : theme.accent }]} />
       )}
     </Pressable>
   );
@@ -55,21 +79,21 @@ const styles = StyleSheet.create({
     height: 44,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: Spacing.two,
+    borderRadius: BorderRadius.small,
     position: 'relative',
   },
   pressed: {
-    opacity: 0.6,
+    opacity: 0.7,
   },
   dayText: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: FontSizes.md,
+    fontWeight: FontWeights.semibold,
   },
   indicator: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
     position: 'absolute',
-    bottom: 6,
+    bottom: 4,
   },
 });

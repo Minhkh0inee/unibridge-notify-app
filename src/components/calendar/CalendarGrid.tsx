@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { useTheme } from '@/hooks/use-theme';
 import { useSchedules } from '@/contexts/SchedulesContext';
-import { Spacing } from '@/constants/theme';
+import { Spacing, BorderRadius, FontSizes, FontWeights } from '@/constants/theme';
 import { DayCell } from './DayCell';
 
 interface CalendarGridProps {
@@ -54,22 +54,28 @@ export function CalendarGrid({ selectedDate, onDateSelect }: CalendarGridProps) 
   today.setHours(0, 0, 0, 0);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.surface }]}>
       <View style={styles.header}>
-        <Pressable onPress={goToPreviousMonth} style={styles.navButton}>
-          <Text style={[styles.navText, { color: theme.text }]}>‹</Text>
+        <Pressable
+          onPress={goToPreviousMonth}
+          style={[styles.navButton, { backgroundColor: theme.background }]}
+        >
+          <Text style={[styles.navText, { color: theme.accent }]}>‹</Text>
         </Pressable>
         <Text style={[styles.monthLabel, { color: theme.text }]}>
           {monthLabel}
         </Text>
-        <Pressable onPress={goToNextMonth} style={styles.navButton}>
-          <Text style={[styles.navText, { color: theme.text }]}>›</Text>
+        <Pressable
+          onPress={goToNextMonth}
+          style={[styles.navButton, { backgroundColor: theme.background }]}
+        >
+          <Text style={[styles.navText, { color: theme.accent }]}>›</Text>
         </Pressable>
       </View>
 
       <View style={styles.weekdays}>
         {['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'].map((day) => (
-          <Text key={day} style={[styles.weekdayText, { color: theme.subtext }]}>
+          <Text key={day} style={[styles.weekdayText, { color: theme.textSecondary }]}>
             {day}
           </Text>
         ))}
@@ -106,13 +112,16 @@ export function CalendarGrid({ selectedDate, onDateSelect }: CalendarGridProps) 
 
 const styles = StyleSheet.create({
   container: {
-    padding: Spacing.three,
+    padding: Spacing.four,
+    borderRadius: BorderRadius.large,
+    marginHorizontal: Spacing.three,
+    marginTop: Spacing.three,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.three,
+    marginBottom: Spacing.four,
   },
   navButton: {
     padding: Spacing.two,
@@ -120,31 +129,35 @@ const styles = StyleSheet.create({
     minHeight: 44,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: BorderRadius.small,
   },
   navText: {
-    fontSize: 28,
-    fontWeight: '300',
+    fontSize: 32,
+    fontWeight: FontWeights.bold,
+    lineHeight: 32,
   },
   monthLabel: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: FontSizes.xl,
+    fontWeight: FontWeights.bold,
     textTransform: 'capitalize',
   },
   weekdays: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: Spacing.two,
+    marginBottom: Spacing.three,
   },
   weekdayText: {
     width: 44,
     textAlign: 'center',
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: FontSizes.xs,
+    fontWeight: FontWeights.bold,
+    textTransform: 'uppercase',
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-around',
+    gap: Spacing.one,
   },
   emptyCell: {
     width: 44,
