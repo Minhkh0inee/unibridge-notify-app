@@ -1,21 +1,40 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { CalendarGrid } from '@/components/calendar/CalendarGrid';
 import { DailyAgenda } from '@/components/calendar/DailyAgenda';
+import { SessionDetailSheet } from '@/components/calendar/SessionDetailSheet';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing, BottomTabInset } from '@/constants/theme';
 import type { SessionName, MedicationSchedule } from '@/types/database.types';
 
 export default function CalendarScreen() {
+  const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [sheetVisible, setSheetVisible] = useState(false);
+  const [selectedSession, setSelectedSession] = useState<SessionName | null>(null);
+  const [selectedSchedules, setSelectedSchedules] = useState<MedicationSchedule[]>([]);
 
   const handleSessionPress = (session: SessionName, schedules: MedicationSchedule[]) => {
-    console.log('Session pressed:', session, schedules);
-    // TODO: Open SessionDetailSheet (Phase 2C)
+    setSelectedSession(session);
+    setSelectedSchedules(schedules);
+    setSheetVisible(true);
+  };
+
+  const handleEditJourney = () => {
+    setSheetVisible(false);
+    // Navigate to journey editor with session context
+    router.push({
+      pathname: '/journey-editor',
+      params: {
+        session: selectedSession,
+        scheduleIds: selectedSchedules.map(s => s.id).join(','),
+      },
+    });
   };
 
   if (authLoading) {
@@ -51,6 +70,16 @@ export default function CalendarScreen() {
           onSessionPress={handleSessionPress}
         />
       </SafeAreaView>
+
+      {selectedSession && (
+        <SessionDetailSheet
+          visible={sheetVisible}
+          session={selectedSession}
+          schedules={selectedSchedules}
+          onClose={() => setSheetVisible(false)}
+          onEditJourney={handleEditJourney}
+        />
+      )}
     </ThemedView>
   );
 }
