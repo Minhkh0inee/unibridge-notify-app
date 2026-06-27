@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   interpolateColor,
   useAnimatedStyle,
@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Spacing } from '@/constants/theme';
 import type { EscalationConfig, Medication } from '@/data/types';
 import { logDose } from '@/data/storage';
+import { verifyMedicationPhoto } from '@/services/medication-verification';
 
 import { LEVEL_CONFIGS, TEST_ADVANCE_LEVEL_ON_IGNORE } from './escalation-levels';
 import type { EscalationLevel } from './escalation-levels';
@@ -26,7 +27,13 @@ export interface EscalatingReminderProps {
   onDismiss: () => void;
 }
 
-type ViewMode = 'reminder' | 'camera';
+type ViewMode =
+  | 'reminder'
+  | 'camera'
+  | 'verifying'
+  | 'verification-failed'
+  | 'verification-error'
+  | 'success';
 
 function MascotDisplay({ level }: { level: EscalationLevel }) {
   const config = LEVEL_CONFIGS[level];
@@ -46,6 +53,8 @@ export function EscalatingReminder({
   const { level, advanceLevel, cleanup } = useEscalation(escalationConfig, visible);
   const [viewMode, setViewMode] = useState<ViewMode>('reminder');
   const [isLogging, setIsLogging] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [capturedPhotoUri, setCapturedPhotoUri] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
 
   // Animate background color through escalation levels
@@ -67,12 +76,16 @@ export function EscalatingReminder({
     if (!visible) {
       setViewMode('reminder');
       setIsLogging(false);
+      setIsVerifying(false);
+      setCapturedPhotoUri(null);
     }
   }, [visible]);
 
   const config = LEVEL_CONFIGS[level];
   const ignoreDisabled =
-    (!TEST_ADVANCE_LEVEL_ON_IGNORE && escalationConfig.requirePhotoToStop) || isLogging;
+    (!TEST_ADVANCE_LEVEL_ON_IGNORE && escalationConfig.requirePhotoToStop) ||
+    isLogging ||
+    isVerifying;
 
   async function handleIgnore() {
     if (ignoreDisabled) return;
@@ -97,15 +110,57 @@ export function EscalatingReminder({
   }
 
   async function handlePhotoConfirm(photoUri: string) {
-    if (isLogging) return;
-    setIsLogging(true);
-    setViewMode('reminder');
+    if (isLogging || isVerifying) return;
+
+    setCapturedPhotoUri(photoUri);
+    setIsVerifying(true);
+    setViewMode('verifying');
+
     try {
+      const result = await verifyMedicationPhoto(photoUri);
+      console.log('[MedicationVerification] result:', result);
+      if (!result.containsMedication || result.confidence === 'low') {
+        setViewMode('verification-failed');
+        return;
+      }
+
+      setIsLogging(true);
       await logDose({
         medicationId: medication.id,
         scheduledTime,
         actionTakenAt: new Date().toISOString(),
         photoUri,
+        status: 'taken',
+      });
+      cleanup();
+      setViewMode('success');
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      onDismiss();
+    } catch (error) {
+      console.warn('[MedicationVerification] error:', error);
+      setViewMode('verification-error');
+      setIsLogging(false);
+    } finally {
+      setIsVerifying(false);
+    }
+  }
+
+  function handleRetakePhoto() {
+    if (isLogging || isVerifying) return;
+    setCapturedPhotoUri(null);
+    setViewMode('camera');
+  }
+
+  async function handleManualConfirm() {
+    if (isLogging || isVerifying) return;
+
+    setIsLogging(true);
+    try {
+      await logDose({
+        medicationId: medication.id,
+        scheduledTime,
+        actionTakenAt: new Date().toISOString(),
+        photoUri: capturedPhotoUri ?? undefined,
         status: 'taken',
       });
       cleanup();
@@ -118,7 +173,7 @@ export function EscalatingReminder({
   return (
     <Modal visible={visible} animationType="slide" statusBarTranslucent transparent>
       <Animated.View style={[StyleSheet.absoluteFill, animatedBg]}>
-        {viewMode === 'reminder' ? (
+        {viewMode === 'reminder' && (
           <View
             style={[
               styles.content,
@@ -155,11 +210,75 @@ export function EscalatingReminder({
               </Pressable>
             </View>
           </View>
-        ) : (
+        )}
+
+        {viewMode === 'camera' && (
           <CameraCapture
             onCapture={handlePhotoConfirm}
             onCancel={() => setViewMode('reminder')}
           />
+        )}
+
+        {viewMode === 'verifying' && (
+          <View style={styles.statusContent}>
+            <ActivityIndicator size="large" color={config.textColor} />
+            <Text style={[styles.statusTitle, { color: config.textColor }]}>
+              Verifying your dose...
+            </Text>
+            <Text style={[styles.statusBody, { color: config.textColor }]}>
+              Keep this screen open while we check your photo.
+            </Text>
+          </View>
+        )}
+
+        {viewMode === 'verification-failed' && (
+          <View style={styles.statusContent}>
+            <Text style={styles.statusEmoji}>🔍💊</Text>
+            <Text style={[styles.statusTitle, { color: config.textColor }]}>
+              No pill detected!
+            </Text>
+            <Text style={[styles.statusBody, { color: config.textColor }]}>
+              Make sure your medication is clearly visible and try again.
+            </Text>
+            <Pressable onPress={handleRetakePhoto} style={styles.primaryButton}>
+              <Text style={styles.primaryButtonText}>Retake Photo</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {viewMode === 'verification-error' && (
+          <View style={styles.statusContent}>
+            <Text style={styles.statusEmoji}>⚠️</Text>
+            <Text style={[styles.statusTitle, { color: config.textColor }]}>
+              Verification failed
+            </Text>
+            <Text style={[styles.statusBody, { color: config.textColor }]}>
+              Retake the photo or confirm manually as a last resort.
+            </Text>
+            <View style={styles.statusButtons}>
+              <Pressable
+                onPress={handleRetakePhoto}
+                disabled={isLogging}
+                style={[styles.primaryButton, isLogging && styles.buttonDisabled]}>
+                <Text style={styles.primaryButtonText}>Retake Photo</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleManualConfirm}
+                disabled={isLogging}
+                style={[styles.manualButton, isLogging && styles.buttonDisabled]}>
+                <Text style={[styles.manualButtonText, { color: config.textColor }]}>
+                  {isLogging ? 'Saving…' : 'Confirm Manually'}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
+
+        {viewMode === 'success' && (
+          <View style={[StyleSheet.absoluteFill, styles.successContent]}>
+            <Text style={styles.successEmoji}>😊✨</Text>
+            <Text style={styles.successTitle}>Great job! Dose confirmed!</Text>
+          </View>
         )}
       </Animated.View>
     </Modal>
@@ -207,6 +326,62 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.4,
+  },
+  statusContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.three,
+    paddingHorizontal: Spacing.four,
+  },
+  statusEmoji: {
+    fontSize: 72,
+    textAlign: 'center',
+  },
+  statusTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    lineHeight: 34,
+    textAlign: 'center',
+  },
+  statusBody: {
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 24,
+    opacity: 0.9,
+    textAlign: 'center',
+  },
+  statusButtons: {
+    alignSelf: 'stretch',
+    gap: Spacing.two,
+    marginTop: Spacing.three,
+  },
+  manualButton: {
+    paddingVertical: Spacing.three,
+    paddingHorizontal: Spacing.four,
+    alignItems: 'center',
+  },
+  manualButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  successContent: {
+    backgroundColor: '#22A06B',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.three,
+    paddingHorizontal: Spacing.four,
+  },
+  successEmoji: {
+    fontSize: 100,
+    textAlign: 'center',
+  },
+  successTitle: {
+    color: '#FFFFFF',
+    fontSize: 28,
+    fontWeight: '800',
+    lineHeight: 36,
+    textAlign: 'center',
   },
   ignoreButton: {
     paddingVertical: Spacing.three,
