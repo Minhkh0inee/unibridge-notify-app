@@ -18,7 +18,10 @@ import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, FontSizes, Primary, Spacing } from '@/constants/theme';
 import { saveJourney } from '@/data/storage';
 import type { Journey } from '@/data/types';
-import { scheduleJourneyNotificationsAsync } from '@/notifications/notifications';
+import {
+  scheduleCarryReminders,
+  scheduleJourneyNotificationsAsync,
+} from '@/notifications/notifications';
 import { useTheme } from '@/hooks/use-theme';
 
 type IntervalOption = 1 | 3 | 5;
@@ -170,6 +173,7 @@ export default function CreateJourneyScreen() {
       };
       await saveJourney(journey);
       await scheduleJourneyNotificationsAsync(journey);
+      await scheduleCarryReminders();
       router.replace('/');
     } catch {
       setSaving(false);

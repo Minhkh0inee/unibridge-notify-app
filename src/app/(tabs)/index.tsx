@@ -14,7 +14,10 @@ import { BottomTabInset, MaxContentWidth, Primary, Spacing } from '@/constants/t
 import { seedIfNeeded } from '@/data/seed';
 import { getActiveJourney } from '@/data/storage';
 import type { Journey, Medication } from '@/data/types';
-import { scheduleTestNotificationAsync } from '@/notifications/notifications';
+import {
+  scheduleTestCarryNotificationAsync,
+  scheduleTestNotificationAsync,
+} from '@/notifications/notifications';
 import {
   clearPendingReminderIntent,
   getPendingReminderIntent,
@@ -54,6 +57,7 @@ export default function HomeScreen() {
   const [reminderTarget, setReminderTarget] = useState<ReminderTarget | null>(null);
   const [showReminder, setShowReminder] = useState(false);
   const [isSchedulingTest, setIsSchedulingTest] = useState(false);
+  const [isSchedulingCarryTest, setIsSchedulingCarryTest] = useState(false);
   const [notificationStatus, setNotificationStatus] = useState<string | null>(null);
 
   useEffect(() => {
@@ -112,6 +116,26 @@ export default function HomeScreen() {
   function dismissReminder() {
     setShowReminder(false);
     setReminderTarget(null);
+  }
+
+  async function scheduleCarryTest() {
+    if (isSchedulingCarryTest) return;
+    setIsSchedulingCarryTest(true);
+    setNotificationStatus(null);
+    try {
+      const scheduledFor = await scheduleTestCarryNotificationAsync();
+      setNotificationStatus('Bag check scheduled — fires in 10 seconds.');
+      Alert.alert(
+        'Notification scheduled',
+        `Bag check notification will fire at ${scheduledFor.toLocaleTimeString()}. Put the app in the background.`
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to schedule notification.';
+      setNotificationStatus(message);
+      Alert.alert('Unable to schedule notification', message);
+    } finally {
+      setIsSchedulingCarryTest(false);
+    }
   }
 
   async function scheduleTenSecondTest() {
@@ -193,6 +217,19 @@ export default function HomeScreen() {
               </ThemedText>
             </Pressable>
 
+            <Pressable
+              onPress={scheduleCarryTest}
+              disabled={isSchedulingCarryTest}
+              style={[
+                styles.testButton,
+                styles.carryTestButton,
+                isSchedulingCarryTest && styles.buttonDisabled,
+              ]}>
+              <ThemedText type="smallBold" style={styles.testButtonText}>
+                {isSchedulingCarryTest ? 'Scheduling…' : '🎒 Test Bag Check Notification'}
+              </ThemedText>
+            </Pressable>
+
             {notificationStatus && (
               <ThemedText type="small" themeColor="textSecondary" style={styles.statusText}>
                 {notificationStatus}
@@ -271,5 +308,8 @@ const styles = StyleSheet.create({
   },
   createJourneyButton: {
     backgroundColor: '#22C55E',
+  },
+  carryTestButton: {
+    backgroundColor: '#F97316',
   },
 });

@@ -217,6 +217,76 @@ export async function scheduleTestNotificationAsync(
   return { identifier, scheduledFor };
 }
 
+export async function scheduleTestCarryNotificationAsync(): Promise<Date> {
+  const granted = await requestNotificationPermissionsAsync();
+  if (!granted) {
+    throw new Error(
+      'Notification permission is disabled. Enable it in device Settings, then try again.'
+    );
+  }
+
+  const scheduledFor = new Date(Date.now() + 10_000);
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: '🎒 Bag check!',
+      body: "Don't forget to pack your meds before you head out today.",
+      sound: 'default',
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: scheduledFor,
+      channelId: MEDICATION_CHANNEL_ID,
+    },
+  });
+  return scheduledFor;
+}
+
+const CARRY_EVENING_ID = 'carry-evening';
+const CARRY_MORNING_ID = 'carry-morning';
+
+export async function scheduleCarryReminders(): Promise<void> {
+  if (Platform.OS === 'web') return;
+
+  const granted = await requestNotificationPermissionsAsync();
+  if (!granted) return;
+
+  await Promise.all([
+    Notifications.cancelScheduledNotificationAsync(CARRY_EVENING_ID).catch(() => {}),
+    Notifications.cancelScheduledNotificationAsync(CARRY_MORNING_ID).catch(() => {}),
+  ]);
+
+  await Promise.all([
+    Notifications.scheduleNotificationAsync({
+      identifier: CARRY_EVENING_ID,
+      content: {
+        title: '🌙 Prep for tomorrow',
+        body: "Pack your midday meds into your bag tonight so you don't forget!",
+        sound: 'default',
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour: 21,
+        minute: 0,
+        channelId: MEDICATION_CHANNEL_ID,
+      },
+    }),
+    Notifications.scheduleNotificationAsync({
+      identifier: CARRY_MORNING_ID,
+      content: {
+        title: '☀️ Bag check!',
+        body: "Don't forget to pack your meds before you head out today.",
+        sound: 'default',
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour: 7,
+        minute: 0,
+        channelId: MEDICATION_CHANNEL_ID,
+      },
+    }),
+  ]);
+}
+
 export async function snoozeMedicationNotificationAsync(
   notification: Notifications.Notification,
   seconds = 5 * 60

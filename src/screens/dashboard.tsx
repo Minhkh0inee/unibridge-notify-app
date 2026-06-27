@@ -1,5 +1,7 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
+
+import CarryReminderCard from '@/components/carry-reminder-card';
 import {
   ActivityIndicator,
   Pressable,
@@ -13,7 +15,7 @@ import { EscalatingReminder } from '@/components/escalating-reminder';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, FontSizes, Primary, Spacing } from '@/constants/theme';
-import { getActiveJourney, getWeeklyLogs } from '@/data/storage';
+import { getActiveJourney, getTodayCarryLog, getWeeklyLogs } from '@/data/storage';
 import type { DoseLog, Journey, Medication } from '@/data/types';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -146,19 +148,22 @@ export default function DashboardScreen() {
   const [logs, setLogs] = useState<DoseLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [showReminder, setShowReminder] = useState(false);
+  const [carryConfirmed, setCarryConfirmed] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
       async function load() {
         setLoading(true);
-        const [activeJourney, weeklyLogs] = await Promise.all([
+        const [activeJourney, weeklyLogs, carryLog] = await Promise.all([
           getActiveJourney(),
           getWeeklyLogs(),
+          getTodayCarryLog(),
         ]);
         if (active) {
           setJourney(activeJourney);
           setLogs(weeklyLogs);
+          setCarryConfirmed(carryLog !== null);
           setLoading(false);
         }
       }
@@ -235,6 +240,14 @@ export default function DashboardScreen() {
               <ThemedText>🔥 {streak} days</ThemedText>
             </View>
           </View>
+
+          {/* Bag check card */}
+          {!carryConfirmed && (
+            <CarryReminderCard
+              journey={journey}
+              onConfirmed={() => setCarryConfirmed(true)}
+            />
+          )}
 
           {/* Kill the bacteria progress */}
           <View style={[styles.card, { backgroundColor: colors.backgroundElement }]}>
