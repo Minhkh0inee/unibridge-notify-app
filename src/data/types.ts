@@ -13,6 +13,19 @@ export interface Medication {
   dosage: string;
   /** ISO 24h clock strings e.g. ["08:00", "20:00"] */
   reminderTimes: string[];
+  activeIngredient?: string;
+  form?: string;
+  quantityPerDose?: number | string;
+  unit?: string;
+  instruction?: 'before_meal' | 'after_meal' | 'during_meal' | 'none';
+  startDate?: string;
+  endDate?: string;
+  doctorOrClinic?: string;
+  notes?: string;
+  purpose?: string;
+  recheckDate?: string;
+  dataSource?: 'manual' | 'ocr';
+  status?: 'active' | 'paused' | 'ended';
 }
 
 export interface Journey {

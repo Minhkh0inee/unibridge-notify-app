@@ -3,6 +3,7 @@ import {
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
+import { usePathname } from "expo-router";
 import { useEffect } from "react";
 import { useColorScheme } from "react-native";
 
@@ -12,6 +13,9 @@ import { seedIfNeeded } from "@/data/seed";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const pathname = usePathname();
+
+  const shouldShowSplash = pathname === "/" || pathname === "";
 
   useEffect(() => {
     seedIfNeeded().catch(console.error);
@@ -19,7 +23,7 @@ export default function TabLayout() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
+      {shouldShowSplash ? <AnimatedSplashOverlay /> : null}
       <AppTabs />
     </ThemeProvider>
   );
