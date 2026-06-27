@@ -18,13 +18,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    console.log('AuthContext: Initializing...');
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+      console.log('AuthContext: getSession result:', { session, error });
+      if (error) {
+        console.error('AuthContext: getSession error:', error);
+      }
+
+      // Auto sign in anonymously if no session exists
+      if (!session) {
+        console.log('AuthContext: No session found, signing in anonymously...');
+        try {
+          const { data, error: signInError } = await supabase.auth.signInAnonymously();
+          console.log('AuthContext: Anonymous sign in result:', { data, error: signInError });
+          if (signInError) throw signInError;
+          setSession(data.session);
+          setUser(data.session?.user ?? null);
+        } catch (err) {
+          console.error('AuthContext: Anonymous sign in failed:', err);
+        }
+      } else {
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
+      setIsLoading(false);
+    }).catch(err => {
+      console.error('AuthContext: getSession exception:', err);
       setIsLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('AuthContext: Auth state changed:', _event, session);
       setSession(session);
       setUser(session?.user ?? null);
     });
