@@ -19,6 +19,8 @@ export default function CalendarScreen() {
   const [selectedSession, setSelectedSession] = useState<SessionName | null>(null);
   const [selectedSchedules, setSelectedSchedules] = useState<MedicationSchedule[]>([]);
 
+  console.log('CalendarScreen render:', { user: !!user, authLoading });
+
   const handleSessionPress = (session: SessionName, schedules: MedicationSchedule[]) => {
     setSelectedSession(session);
     setSelectedSchedules(schedules);
@@ -49,7 +51,10 @@ export default function CalendarScreen() {
     return (
       <ThemedView style={styles.centerContainer}>
         <ThemedText style={styles.messageText}>
-          Đang kết nối...
+          Chưa có người dùng đăng nhập
+        </ThemedText>
+        <ThemedText style={[styles.messageText, { marginTop: 8, fontSize: 14, opacity: 0.7 }]}>
+          Backend Supabase chưa được cấu hình
         </ThemedText>
       </ThemedView>
     );
