@@ -1,13 +1,25 @@
 import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Alert, Platform, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AnimatedIcon } from '@/components/animated-icon';
+import { EscalatingReminder } from '@/components/escalating-reminder';
 import { HintRow } from '@/components/hint-row';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { BottomTabInset, MaxContentWidth, Primary, Spacing } from '@/constants/theme';
+import { seedIfNeeded } from '@/data/seed';
+import { getActiveJourney } from '@/data/storage';
+import type { Journey, Medication } from '@/data/types';
+import { scheduleTestNotificationAsync } from '@/notifications/notifications';
+
+interface ReminderTarget {
+  medication: Medication;
+  scheduledTime: string;
+}
 
 function getDevMenuHint() {
   if (Platform.OS === 'web') {
@@ -29,8 +41,101 @@ function getDevMenuHint() {
 }
 
 export default function HomeScreen() {
+  const { reminderMedicationId, reminderScheduledTime, notificationId } = useLocalSearchParams<{
+    reminderMedicationId?: string;
+    reminderScheduledTime?: string;
+    notificationId?: string;
+  }>();
+  const [journey, setJourney] = useState<Journey | null>(null);
+  const [reminderTarget, setReminderTarget] = useState<ReminderTarget | null>(null);
+  const [showReminder, setShowReminder] = useState(false);
+  const [isSchedulingTest, setIsSchedulingTest] = useState(false);
+  const [notificationStatus, setNotificationStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadJourney() {
+      await seedIfNeeded();
+      const activeJourney = await getActiveJourney();
+      if (mounted) {
+        setJourney(activeJourney);
+      }
+    }
+
+    loadJourney().catch(console.error);
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!journey || !reminderMedicationId || !reminderScheduledTime || !notificationId) return;
+
+    const medication = journey.medications.find((item) => item.id === reminderMedicationId);
+    if (!medication) {
+      if (__DEV__) {
+        console.warn(`Medication from notification was not found: ${reminderMedicationId}`);
+      }
+      return;
+    }
+
+    setReminderTarget({ medication, scheduledTime: reminderScheduledTime });
+    setShowReminder(true);
+  }, [journey, notificationId, reminderMedicationId, reminderScheduledTime]);
+
+  function openManualReminder() {
+    const medication = journey?.medications[0];
+    const scheduledTime = medication?.reminderTimes[0];
+    if (!medication || !scheduledTime) return;
+
+    setReminderTarget({ medication, scheduledTime });
+    setShowReminder(true);
+  }
+
+  function dismissReminder() {
+    setShowReminder(false);
+    setReminderTarget(null);
+
+    if (notificationId) {
+      router.replace('/');
+    }
+  }
+
+  async function scheduleTenSecondTest() {
+    const medication = journey?.medications[0];
+    const scheduledTime = medication?.reminderTimes[0];
+    if (!medication || !scheduledTime || isSchedulingTest) return;
+
+    setIsSchedulingTest(true);
+    setNotificationStatus(null);
+    try {
+      const result = await scheduleTestNotificationAsync(medication, scheduledTime);
+      setNotificationStatus('Scheduled — notification will fire in 10 seconds.');
+      Alert.alert(
+        'Notification scheduled',
+        `It will fire at ${result.scheduledFor.toLocaleTimeString()}. Put the app in the background, then tap the notification.`
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to schedule notification.';
+      setNotificationStatus(message);
+      Alert.alert('Unable to schedule notification', message);
+    } finally {
+      setIsSchedulingTest(false);
+    }
+  }
+
   return (
     <ThemedView style={styles.container}>
+      {journey && reminderTarget && (
+        <EscalatingReminder
+          visible={showReminder}
+          medication={reminderTarget.medication}
+          scheduledTime={reminderTarget.scheduledTime}
+          escalationConfig={journey.escalationConfig}
+          onDismiss={dismissReminder}
+        />
+      )}
       <SafeAreaView style={styles.safeArea}>
         <ThemedView style={styles.heroSection}>
           <AnimatedIcon />
@@ -54,6 +159,35 @@ export default function HomeScreen() {
             hint={<ThemedText type="code">npm run reset-project</ThemedText>}
           />
         </ThemedView>
+
+        {journey && (
+          <>
+            <Pressable onPress={openManualReminder} style={styles.testButton}>
+              <ThemedText type="smallBold" style={styles.testButtonText}>
+                Test Reminder Modal
+              </ThemedText>
+            </Pressable>
+
+            <Pressable
+              onPress={scheduleTenSecondTest}
+              disabled={isSchedulingTest}
+              style={[
+                styles.testButton,
+                styles.notificationButton,
+                isSchedulingTest && styles.buttonDisabled,
+              ]}>
+              <ThemedText type="smallBold" style={styles.testButtonText}>
+                {isSchedulingTest ? 'Scheduling…' : 'Test Notification in 10 Seconds'}
+              </ThemedText>
+            </Pressable>
+
+            {notificationStatus && (
+              <ThemedText type="small" themeColor="textSecondary" style={styles.statusText}>
+                {notificationStatus}
+              </ThemedText>
+            )}
+          </>
+        )}
 
         {Platform.OS === 'web' && <WebBadge />}
       </SafeAreaView>
@@ -94,5 +228,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.four,
     borderRadius: Spacing.four,
+  },
+  testButton: {
+    backgroundColor: Primary,
+    paddingVertical: Spacing.three,
+    paddingHorizontal: Spacing.four,
+    borderRadius: Spacing.two,
+    alignSelf: 'stretch',
+    alignItems: 'center',
+  },
+  testButtonText: {
+    color: '#fff',
+  },
+  notificationButton: {
+    backgroundColor: '#E53E3E',
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  statusText: {
+    textAlign: 'center',
   },
 });
