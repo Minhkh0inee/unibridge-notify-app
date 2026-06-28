@@ -17,6 +17,8 @@ export function useEscalation(
 
   const timer1Ref = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timer2Ref = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timer3Ref = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timer4Ref = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hapticIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const soundRef = useRef<Audio.Sound | null>(null);
   const soundRequestRef = useRef(0);
@@ -29,6 +31,14 @@ export function useEscalation(
     if (timer2Ref.current !== null) {
       clearTimeout(timer2Ref.current);
       timer2Ref.current = null;
+    }
+    if (timer3Ref.current !== null) {
+      clearTimeout(timer3Ref.current);
+      timer3Ref.current = null;
+    }
+    if (timer4Ref.current !== null) {
+      clearTimeout(timer4Ref.current);
+      timer4Ref.current = null;
     }
   }, []);
 
@@ -48,7 +58,7 @@ export function useEscalation(
   const advanceLevel = useCallback(() => {
     clearEscalationTimers();
     setLevel((currentLevel) =>
-      currentLevel < 2 ? ((currentLevel + 1) as EscalationLevel) : currentLevel
+      currentLevel < 4 ? ((currentLevel + 1) as EscalationLevel) : currentLevel
     );
   }, [clearEscalationTimers]);
 
@@ -66,6 +76,12 @@ export function useEscalation(
       setLevel(1);
       timer2Ref.current = setTimeout(() => {
         setLevel(2);
+        timer3Ref.current = setTimeout(() => {
+          setLevel(3);
+          timer4Ref.current = setTimeout(() => {
+            setLevel(4);
+          }, stepSeconds * 1000);
+        }, stepSeconds * 1000);
       }, stepSeconds * 1000);
     }, startGentleSeconds * 1000);
 
@@ -102,6 +118,18 @@ export function useEscalation(
         androidType: Haptics.AndroidHaptics.Reject,
         useErrorPattern: true,
         intervalMs: 130,
+      },
+      {
+        style: Haptics.ImpactFeedbackStyle.Heavy,
+        androidType: Haptics.AndroidHaptics.Reject,
+        useErrorPattern: true,
+        intervalMs: 85,
+      },
+      {
+        style: Haptics.ImpactFeedbackStyle.Heavy,
+        androidType: Haptics.AndroidHaptics.Reject,
+        useErrorPattern: true,
+        intervalMs: 55,
       },
     ] as const;
 

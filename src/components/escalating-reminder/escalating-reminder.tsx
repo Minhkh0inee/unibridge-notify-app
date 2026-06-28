@@ -66,8 +66,8 @@ export function EscalatingReminder({
   const animatedBg = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(
       progress.value,
-      [0, 1, 2],
-      ['#208AEF', '#F5C842', '#E53E3E']
+      [0, 1, 2, 3, 4],
+      ['#208AEF', '#F5C842', '#F97316', '#E53E3E', '#7F1D1D']
     ),
   }));
 
@@ -89,7 +89,7 @@ export function EscalatingReminder({
 
   async function handleIgnore() {
     if (ignoreDisabled) return;
-    if (TEST_ADVANCE_LEVEL_ON_IGNORE && level < 2) {
+    if (TEST_ADVANCE_LEVEL_ON_IGNORE && level < 4) {
       advanceLevel();
       return;
     }
