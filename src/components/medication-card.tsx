@@ -26,8 +26,7 @@ const fallbackStatus: StatusMeta = {
 
 const statusText: Partial<Record<ScheduledDose['status'], StatusMeta>> = {
   taken: { label: 'Đã uống', icon: 'check', tone: 'success' },
-  ignored: { label: 'Bỏ qua', icon: 'warning', tone: 'danger' },
-  skipped: { label: 'Bỏ qua', icon: 'warning', tone: 'danger' },
+  ignored: { label: 'Bỏ lỡ', icon: 'warning', tone: 'danger' },
   pending: { label: 'Chờ uống', icon: 'clock', tone: 'primary' },
   upcoming: { label: 'Sắp tới', icon: 'clock', tone: 'muted' },
   late: { label: 'Trễ', icon: 'warning', tone: 'warning' },

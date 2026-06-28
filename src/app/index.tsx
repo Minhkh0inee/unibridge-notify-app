@@ -195,153 +195,83 @@ export default function HomeScreen() {
             paddingTop: Math.max(insets.top, 16) + 16,
             paddingBottom: insets.bottom + BottomTabInset + 130,
           },
-        ]}
-      >
-        <View style={styles.header}>
-          <View style={styles.headerCopy}>
-            <Text style={[styles.greeting, { color: theme.textSecondary }]}>
-              Chào buổi sáng, Ngọc
-            </Text>
-            <Text style={[styles.title, { color: theme.text }]}>
-              Hôm nay bạn có{"\n"}
-              {loading ? "..." : progress.total} lần uống thuốc
-            </Text>
-          </View>
-          <Pressable
-            accessibilityLabel="Thông báo"
-            style={[
-              styles.bellButton,
-              {
-                backgroundColor: theme.backgroundElement,
-                borderColor: theme.border,
-              },
-            ]}
-          >
-            <AppIcon name="bell" color={theme.text} size={18} />
-            <View
-              style={[
-                styles.notificationDot,
-                {
-                  backgroundColor: theme.primary,
-                  borderColor: theme.backgroundElement,
-                },
-              ]}
-            />
-          </Pressable>
+        ]}>
+      <View style={styles.header}>
+        <View style={styles.headerCopy}>
+          <Text style={[styles.greeting, { color: theme.textSecondary }]}>Morning Ngọc 🌤️</Text>
+          <Text style={[styles.title, { color: theme.text }]}>
+            Hôm nay có{'\n'}
+            {loading ? '...' : progress.total} liều nha
+          </Text>
         </View>
+        <Pressable
+          accessibilityLabel="Thông báo"
+          style={[styles.bellButton, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+          <AppIcon name="bell" color={theme.text} size={18} />
+          <View style={[styles.notificationDot, { backgroundColor: theme.primary, borderColor: theme.backgroundElement }]} />
+        </Pressable>
+      </View>
 
-        <View
-          style={[
-            styles.progressCard,
-            {
-              backgroundColor: theme.backgroundElement,
-              borderColor: theme.border,
-              shadowColor: theme.cardShadow,
-            },
-          ]}
-        >
-          <View
-            style={[styles.mascotTile, { backgroundColor: theme.primarySoft }]}
-          >
-            <Mascot mood="happy" size={90} />
-          </View>
-          <View style={styles.progressText}>
-            <Text style={[styles.kicker, { color: theme.textSecondary }]}>
-              Tiến độ hôm nay
-            </Text>
-            <Text style={[styles.cardTitle, { color: theme.text }]}>
-              {progress.done}/{progress.total || 0} lần uống
-            </Text>
-            <Text style={[styles.bodyText, { color: theme.textSecondary }]}>
-              {progress.total - progress.done > 0
-                ? `Còn ${progress.total - progress.done} liều nữa thôi. Bạn đang làm rất tốt.`
-                : "Hôm nay đã xong lịch uống thuốc."}
-            </Text>
-          </View>
-          <ProgressRing value={progressValue} />
+      <View
+        style={[
+          styles.progressCard,
+          { backgroundColor: theme.backgroundElement, borderColor: theme.border, shadowColor: theme.cardShadow },
+        ]}>
+        <View style={[styles.mascotTile, { backgroundColor: theme.primarySoft }]}>
+          <Mascot mood="happy" size={90} />
         </View>
+        <View style={styles.progressText}>
+          <Text style={[styles.kicker, { color: theme.textSecondary }]}>Hoàn thành hôm nay</Text>
+          <Text style={[styles.cardTitle, { color: theme.text }]}>
+            {progress.done}/{progress.total || 0} liều
+          </Text>
+          <Text style={[styles.bodyText, { color: theme.textSecondary }]}>
+            {progress.total - progress.done > 0
+              ? `Cố lên, còn ${progress.total - progress.done} liều nữa là xong ngày!`
+              : 'Xong nhiệm vụ hôm nay rồi! 🎉'}
+          </Text>
+        </View>
+        <ProgressRing value={progressValue} />
+      </View>
 
-        {nextDose && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text
-                style={[styles.sectionLabel, { color: theme.textSecondary }]}
-              >
-                Tiếp theo
-              </Text>
-              <Text
-                style={[styles.sectionMeta, { color: theme.textSecondary }]}
-              >
-                {nextDose.time}
-              </Text>
-            </View>
-            <View
-              style={[
-                styles.nextCard,
-                { backgroundColor: theme.primary, shadowColor: theme.primary },
-              ]}
-            >
-              <View style={styles.nextGlowLarge} />
-              <View style={styles.nextGlowSmall} />
-              <View style={styles.nextTop}>
-                <View style={styles.nextCopy}>
-                  <Text
-                    style={[
-                      styles.nextKicker,
-                      { color: theme.primaryForeground },
-                    ]}
-                  >
-                    Lúc {nextDose.time} · {nextDose.period}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.nextTitle,
-                      { color: theme.primaryForeground },
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {nextDose.medication.name}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.nextMeta,
-                      { color: theme.primaryForeground },
-                    ]}
-                  >
-                    {nextDose.medication.dosage} · Lịch{" "}
-                    {journey?.name ?? "đang theo dõi"}
-                  </Text>
-                </View>
-                <View style={styles.upcomingBadge}>
-                  <Text style={styles.upcomingText}>Sắp tới</Text>
-                </View>
+      {nextDose && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>Tiếp theo</Text>
+            <Text style={[styles.sectionMeta, { color: theme.textSecondary }]}>{nextDose.time}</Text>
+          </View>
+          <View style={[styles.nextCard, { backgroundColor: theme.primary, shadowColor: theme.primary }]}>
+            <View style={styles.nextGlowLarge} />
+            <View style={styles.nextGlowSmall} />
+            <View style={styles.nextTop}>
+              <View style={styles.nextCopy}>
+                <Text style={[styles.nextKicker, { color: theme.primaryForeground }]}>
+                  Lúc {nextDose.time} · {nextDose.period}
+                </Text>
+                <Text style={[styles.nextTitle, { color: theme.primaryForeground }]} numberOfLines={1}>
+                  {nextDose.medication.name}
+                </Text>
+                <Text style={[styles.nextMeta, { color: theme.primaryForeground }]}>
+                  {nextDose.medication.dosage} · Lịch {journey?.name ?? 'uống hiện tại'}
+                </Text>
               </View>
-              <View style={styles.nextActions}>
-                <Pressable
-                  onPress={() =>
-                    openReminder(nextDose.medication, nextDose.time)
-                  }
-                  style={({ pressed }) => [
-                    styles.confirmButton,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <Text style={[styles.confirmText, { color: theme.primary }]}>
-                    Xác nhận uống
-                  </Text>
-                </Pressable>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.detailButton,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <Text style={styles.detailText}>Chi tiết</Text>
-                </Pressable>
+              <View style={styles.upcomingBadge}>
+                <Text style={styles.upcomingText}>Sắp tới</Text>
               </View>
             </View>
+            <View style={styles.nextActions}>
+              <Pressable
+                onPress={() => openReminder(nextDose.medication, nextDose.time)}
+                style={({ pressed }) => [styles.confirmButton, pressed && styles.pressed]}>
+                <Text style={[styles.confirmText, { color: theme.primary }]}>Đã uống</Text>
+              </Pressable>
+              <Pressable style={({ pressed }) => [styles.detailButton, pressed && styles.pressed]}>
+                <Text style={styles.detailText}>Chi tiết</Text>
+              </Pressable>
+            </View>
           </View>
-        )}
+        </View>
+      )}
 
         <View style={styles.quickGrid}>
           <QuickAction
@@ -362,54 +292,43 @@ export default function HomeScreen() {
           <QuickAction icon="bag" label="Nhắc mang" />
         </View>
 
-        <View
-          style={[
-            styles.testPanel,
-            {
-              backgroundColor: theme.backgroundElement,
-              borderColor: theme.border,
-            },
-          ]}
-        >
-          <View style={styles.testPanelHeader}>
-            <View
-              style={[styles.testBadge, { backgroundColor: theme.primarySoft }]}
-            >
-              <Text style={[styles.testBadgeText, { color: theme.primary }]}>
-                TEST LAB
-              </Text>
-            </View>
-            <View style={styles.testPanelCopy}>
-              <Text style={[styles.testPanelTitle, { color: theme.text }]}>
-                Kiểm tra hệ thống nhắc
-              </Text>
-              <Text
-                style={[
-                  styles.testPanelSubtitle,
-                  { color: theme.textSecondary },
-                ]}
-              >
-                Notification được gửi sau 10 giây.
-              </Text>
-            </View>
+      <View
+        style={[
+          styles.testPanel,
+          {
+            backgroundColor: theme.backgroundElement,
+            borderColor: theme.border,
+          },
+        ]}>
+        <View style={styles.testPanelHeader}>
+          <View style={[styles.testBadge, { backgroundColor: theme.primarySoft }]}>
+            <Text style={[styles.testBadgeText, { color: theme.primary }]}>TEST LAB</Text>
           </View>
-
-          <Pressable
-            accessibilityRole="button"
-            onPress={openTestReminder}
-            style={({ pressed }) => [
-              styles.testPrimaryButton,
-              {
-                backgroundColor: theme.text,
-                transform: [{ scale: pressed ? 0.985 : 1 }],
-              },
-            ]}
-          >
-            <AppIcon name="bell" color={theme.background} size={16} />
-            <Text style={[styles.testPrimaryText, { color: theme.background }]}>
-              Mở reminder modal ngay
+          <View style={styles.testPanelCopy}>
+            <Text style={[styles.testPanelTitle, { color: theme.text }]}>
+              Test thử nhắc nhở
             </Text>
-          </Pressable>
+            <Text style={[styles.testPanelSubtitle, { color: theme.textSecondary }]}>
+              Thông báo sẽ nổ sau 10 giây.
+            </Text>
+          </View>
+        </View>
+
+        <Pressable
+          accessibilityRole="button"
+          onPress={openTestReminder}
+          style={({ pressed }) => [
+            styles.testPrimaryButton,
+            {
+              backgroundColor: theme.text,
+              transform: [{ scale: pressed ? 0.985 : 1 }],
+            },
+          ]}>
+          <AppIcon name="bell" color={theme.background} size={16} />
+          <Text style={[styles.testPrimaryText, { color: theme.background }]}>
+            Mở thử lời nhắc
+          </Text>
+        </Pressable>
 
           <View style={styles.carryTimeRow}>
             <Text

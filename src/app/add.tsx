@@ -275,8 +275,7 @@ export default function AddMedicationScreen() {
           <AppIcon name="pill" color={theme.primaryForeground} size={20} />
         </View>
         <Text style={[styles.calloutText, { color: theme.text }]}>
-          Tạo một liều gồm tất cả thuốc bạn cần uống cùng lúc. Mèo sẽ nhắc theo
-          từng cữ, không nhắc rời từng viên.
+          Ghi chú lại thuốc để Mèo nhắc bạn đúng giờ nha.
         </Text>
       </View>
 
@@ -336,95 +335,50 @@ export default function AddMedicationScreen() {
               />
             </Field>
 
-            <View style={styles.twoCols}>
-              <View style={styles.halfField}>
-                <Field label="Dạng thuốc">
-                  <TextInput
-                    value={medication.formType}
-                    onChangeText={(formType) =>
-                      updateMedication(medication.id, { formType })
-                    }
-                    placeholder="Viên nang"
-                    placeholderTextColor={theme.textSecondary}
-                    style={[
-                      styles.input,
-                      {
-                        backgroundColor: theme.background,
-                        borderColor: theme.border,
-                        color: theme.text,
-                      },
-                    ]}
-                  />
-                </Field>
-              </View>
-              <View style={styles.halfField}>
-                <Field label="Số lượng mỗi lần">
-                  <TextInput
-                    value={medication.dosage}
-                    onChangeText={(dosage) => updateMedication(medication.id, { dosage })}
-                    placeholder="1 viên"
-                    placeholderTextColor={theme.textSecondary}
-                    style={[
-                      styles.input,
-                      {
-                        backgroundColor: theme.background,
-                        borderColor: theme.border,
-                        color: theme.text,
-                      },
-                    ]}
-                  />
-                </Field>
-              </View>
-            </View>
-
-            <Field label="Cách dùng">
-              <View style={styles.chips}>
-                {instructions.map((instruction) => {
-                  const isSelected = medication.instruction === instruction;
-                  return (
-                    <Pressable
-                      key={instruction}
-                      onPress={() =>
-                        updateMedication(medication.id, { instruction })
-                      }
-                      style={[
-                        styles.chip,
-                        {
-                          backgroundColor: isSelected
-                            ? theme.text
-                            : theme.background,
-                          borderColor: isSelected ? theme.text : theme.border,
-                        },
-                      ]}>
-                      <Text
-                        style={[
-                          styles.chipText,
-                          { color: isSelected ? theme.background : theme.text },
-                        ]}>
-                        {instruction}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </Field>
-          </View>
-        ))}
+      <View style={styles.twoCols}>
+        <Field label="Dạng thuốc">
+          <TextInput
+            value={formType}
+            onChangeText={setFormType}
+            placeholder="VD: Viên nang"
+            placeholderTextColor={theme.textSecondary}
+            style={[styles.input, { backgroundColor: theme.backgroundElement, borderColor: theme.border, color: theme.text }]}
+          />
+        </Field>
+        <Field label="Liều lượng">
+          <TextInput
+            value={dosage}
+            onChangeText={setDosage}
+            placeholder="VD: 1 viên"
+            placeholderTextColor={theme.textSecondary}
+            style={[styles.input, { backgroundColor: theme.backgroundElement, borderColor: theme.border, color: theme.text }]}
+          />
+        </Field>
       </View>
 
-      <Pressable
-        onPress={addMedication}
-        style={[styles.addMedicationButton, { borderColor: theme.primary }]}>
-        <AppIcon name="add" color={theme.primary} size={16} />
-        <Text style={[styles.addMedicationText, { color: theme.primary }]}>
-          Thêm thuốc vào liều
-        </Text>
-      </Pressable>
+      <Field label="Cách uống">
+        <View style={styles.chips}>
+          {instructions.map((chip) => {
+            const isSelected = selectedInstruction === chip;
+            return (
+              <Pressable
+                key={chip}
+                onPress={() => setSelectedInstruction(chip)}
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: isSelected ? theme.text : theme.backgroundElement,
+                    borderColor: isSelected ? theme.text : theme.border,
+                  },
+                ]}>
+                <Text style={[styles.chipText, { color: isSelected ? theme.background : theme.text }]}>{chip}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </Field>
 
-      <Field label="Các cữ uống của liều này">
-        <Text style={[styles.periodHint, { color: theme.textSecondary }]}>
-          Bật những buổi cần uống, sau đó chạm vào giờ để điều chỉnh.
-        </Text>
+      <Field label="Giờ uống">
         <View style={[styles.timeList, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
           {timeOptions.map((option, index) => {
             const isEnabled = enabledPeriods[option.period];
