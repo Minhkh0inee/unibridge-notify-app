@@ -32,21 +32,21 @@ export default function InsightsScreen() {
         <View style={styles.heroCopy}>
           <Text style={styles.heroKicker}>Tuyệt vời</Text>
           <Text style={styles.heroTitle}>{progress.done}/{progress.total || 0} lần</Text>
-          <Text style={styles.heroText}>Lịch uống đang rõ ràng hơn. Cứ giữ nhịp này.</Text>
+          <Text style={styles.heroText}>Đang vào guồng rồi. Cứ thế phát huy nha!</Text>
         </View>
       </View>
 
       <View style={styles.statsGrid}>
-        <StatCard icon="chart" label="Tỉ lệ hoàn thành" value={`${rate}%`} tone="success" />
-        <StatCard icon="clock" label="Trễ trung bình" value="24 phút" tone="warning" />
-        <StatCard icon="check" label="Chuỗi ngày" value="6 ngày" tone="primary" />
+        <StatCard icon="chart" label="Đã uống" value={`${rate}%`} tone="success" />
+        <StatCard icon="clock" label="Hay trễ" value="24 phút" tone="warning" />
+        <StatCard icon="check" label="Chuỗi" value="6 ngày" tone="primary" />
         <StatCard icon="sun" label="Buổi hay trễ" value="Sáng" tone="secondary" />
       </View>
 
       <View style={[styles.chartCard, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
         <View style={styles.chartTop}>
           <View>
-            <Text style={[styles.cardTitle, { color: theme.text }]}>Mức hoàn thành</Text>
+            <Text style={[styles.cardTitle, { color: theme.text }]}>Tiến độ uống</Text>
             <Text style={[styles.cardSub, { color: theme.textSecondary }]}>Theo từng ngày trong tuần</Text>
           </View>
           <ProgressRing value={rate / 100} size={48} />
@@ -79,9 +79,9 @@ export default function InsightsScreen() {
         </View>
         <View style={styles.tipCopy}>
           <Text style={[styles.tipKicker, { color: theme.secondary }]}>Đề xuất</Text>
-          <Text style={[styles.tipTitle, { color: theme.text }]}>Dời lời nhắc buổi sáng sang 08:20?</Text>
+          <Text style={[styles.tipTitle, { color: theme.text }]}>Dời nhắc sáng sang 08:20 nha?</Text>
           <Text style={[styles.tipText, { color: theme.textSecondary }]}>
-            Bạn thường phản hồi nhắc sáng muộn hơn một chút. Có thể 08:00 hơi sớm.
+            Mèo thấy bạn hay dậy trễ, mình dời qua 08:20 cho thư thả ha?
           </Text>
         </View>
       </View>

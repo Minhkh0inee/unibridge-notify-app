@@ -35,16 +35,16 @@ const statusMeta: Record<
   DayDoseStatus | DoseEventStatus | 'empty',
   { label: string; icon: AppIconName; tone: 'success' | 'warning' | 'danger' | 'primary' | 'muted' }
 > = {
-  complete: { label: 'Đủ', icon: 'check', tone: 'success' },
-  partial: { label: 'Một phần', icon: 'pill', tone: 'primary' },
-  late: { label: 'Trễ', icon: 'clock', tone: 'warning' },
-  missed: { label: 'Bỏ lỡ', icon: 'warning', tone: 'danger' },
+  complete: { label: 'Xong hết', icon: 'check', tone: 'success' },
+  partial: { label: 'Chưa xong', icon: 'pill', tone: 'primary' },
+  late: { label: 'Hơi trễ', icon: 'clock', tone: 'warning' },
+  missed: { label: 'Lỡ rồi', icon: 'warning', tone: 'danger' },
   future: { label: 'Sắp tới', icon: 'bell', tone: 'primary' },
   none: { label: 'Trống', icon: 'calendar', tone: 'muted' },
-  pending: { label: 'Chờ uống', icon: 'clock', tone: 'primary' },
-  taken: { label: 'Đã uống', icon: 'check', tone: 'success' },
-  skipped: { label: 'Bỏ qua', icon: 'warning', tone: 'danger' },
-  empty: { label: 'Chưa có thuốc', icon: 'calendar', tone: 'muted' },
+  pending: { label: 'Tới giờ', icon: 'clock', tone: 'primary' },
+  taken: { label: 'Xong nha', icon: 'check', tone: 'success' },
+  skipped: { label: 'Skip', icon: 'warning', tone: 'danger' },
+  empty: { label: 'Chưa có gì', icon: 'calendar', tone: 'muted' },
 };
 
 export default function JourneyScreen() {
@@ -93,7 +93,7 @@ export default function JourneyScreen() {
           <View style={styles.monthTitleWrap}>
             <Text style={[styles.monthTitle, { color: theme.text }]}>{monthTitle}</Text>
             <Text style={[styles.monthSubtitle, { color: theme.textSecondary }]}>
-              Guest session · Synced
+              Khách · Đã đồng bộ
             </Text>
           </View>
           <RoundButton icon="chevronRight" onPress={goToNextMonth} label="Tháng sau" />
@@ -169,9 +169,9 @@ export default function JourneyScreen() {
             <View style={[styles.emptyIcon, { backgroundColor: theme.primarySoft }]}>
               <AppIcon name="pill" color={theme.primary} size={26} />
             </View>
-            <Text style={[styles.emptyTitle, { color: theme.text }]}>Chưa có hành trình</Text>
+            <Text style={[styles.emptyTitle, { color: theme.text }]}>Chưa có lịch uống</Text>
             <Text style={[styles.emptyCopy, { color: theme.textSecondary }]}>
-              Khi bạn thêm thuốc, lịch theo ngày và các phiên nhắc sẽ xuất hiện ở đây.
+              Thêm thuốc để Mèo lên lịch nhắc nhở cho bạn nhé!
             </Text>
           </View>
         ) : (
@@ -297,7 +297,7 @@ function PeriodCard({
       ]}>
       <View style={styles.periodTop}>
         <View style={[styles.periodIcon, { backgroundColor: toneSoft }]}>
-          <AppIcon name={meta.icon} color={toneColor} size={20} />
+          <AppIcon name={meta.icon} color={toneColor} size={32} />
         </View>
         <View style={styles.periodBody}>
           <View style={styles.periodTitleRow}>
@@ -432,7 +432,7 @@ function SessionSheet({
             <Text style={[styles.sheetSubtitle, { color: theme.textSecondary }]}>
               {isBedtime
                 ? 'Chuẩn bị thuốc cần mang cho ngày mai.'
-                : 'Chọn giờ uống mục tiêu và khung thời gian hợp lệ.'}
+                : 'Chọn giờ uống cố định và khung giờ linh hoạt.'}
             </Text>
 
             <View style={styles.timeEditor}>
@@ -452,10 +452,10 @@ function SessionSheet({
               />
               <View style={styles.windowGroup}>
                 <Text style={[styles.windowLabel, { color: theme.text }]}>
-                  Khung thời gian hợp lệ
+                  Khung giờ linh hoạt
                 </Text>
                 <Text style={[styles.windowHelp, { color: theme.textSecondary }]}>
-                  Nếu uống trong khoảng này, phiên vẫn được tính là đúng lịch.
+                  Uống trong giờ này vẫn tính là on-time nha.
                 </Text>
                 <View style={styles.timeRow}>
                   <TimeDropdown
@@ -486,8 +486,8 @@ function SessionSheet({
               <AppIcon name={isBedtime ? 'bag' : 'bell'} color={theme.primary} size={18} />
               <Text style={[styles.infoText, { color: theme.text }]}>
                 {isBedtime
-                  ? 'Notification này chỉ nhắc một lần trước khi ngủ và không lặp lại.'
-                  : 'Lịch nhắc cố định: nhắc đúng giờ, nếu bấm nhắc sau thì nhắc lại sau 2 phút, trong vòng 10 phút.'}
+                  ? 'Mèo chỉ nhắc sương sương 1 lần trước khi đi ngủ thôi nha.'
+                  : 'Mèo sẽ nhắc đúng giờ. Chọn "Nhắc sau" thì 2 phút gọi lại 1 lần (tối đa 10 phút).'}
               </Text>
             </View>
 
@@ -963,10 +963,10 @@ const styles = StyleSheet.create({
   },
   periodIcon: {
     alignItems: 'center',
-    borderRadius: 16,
-    height: 44,
+    borderRadius: 20,
+    height: 60,
     justifyContent: 'center',
-    width: 44,
+    width: 60,
   },
   periodBody: {
     flex: 1,
@@ -1058,11 +1058,11 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   timeEditor: {
-    gap: 12,
-    marginTop: 16,
+    gap: 24,
+    marginTop: 20,
   },
   windowGroup: {
-    gap: 6,
+    gap: 10,
   },
   windowLabel: {
     fontFamily: Fonts.sans,
@@ -1079,7 +1079,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   timeField: {
-    gap: 6,
+    gap: 8,
     position: 'relative',
     zIndex: 1,
   },

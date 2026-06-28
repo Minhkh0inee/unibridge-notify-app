@@ -179,10 +179,10 @@ export default function HomeScreen() {
         ]}>
       <View style={styles.header}>
         <View style={styles.headerCopy}>
-          <Text style={[styles.greeting, { color: theme.textSecondary }]}>Chào buổi sáng, Ngọc</Text>
+          <Text style={[styles.greeting, { color: theme.textSecondary }]}>Morning Ngọc 🌤️</Text>
           <Text style={[styles.title, { color: theme.text }]}>
-            Hôm nay bạn có{'\n'}
-            {loading ? '...' : progress.total} lần uống thuốc
+            Hôm nay có{'\n'}
+            {loading ? '...' : progress.total} cữ thuốc nha
           </Text>
         </View>
         <Pressable
@@ -202,14 +202,14 @@ export default function HomeScreen() {
           <Mascot mood="happy" size={90} />
         </View>
         <View style={styles.progressText}>
-          <Text style={[styles.kicker, { color: theme.textSecondary }]}>Tiến độ hôm nay</Text>
+          <Text style={[styles.kicker, { color: theme.textSecondary }]}>Hoàn thành hôm nay</Text>
           <Text style={[styles.cardTitle, { color: theme.text }]}>
-            {progress.done}/{progress.total || 0} lần uống
+            {progress.done}/{progress.total || 0} cữ
           </Text>
           <Text style={[styles.bodyText, { color: theme.textSecondary }]}>
             {progress.total - progress.done > 0
-              ? `Còn ${progress.total - progress.done} liều nữa thôi. Bạn đang làm rất tốt.`
-              : 'Hôm nay đã xong lịch uống thuốc.'}
+              ? `Cố lên, còn ${progress.total - progress.done} cữ nữa là xong ngày!`
+              : 'Xong nhiệm vụ hôm nay rồi! 🎉'}
           </Text>
         </View>
         <ProgressRing value={progressValue} />
@@ -233,7 +233,7 @@ export default function HomeScreen() {
                   {nextDose.medication.name}
                 </Text>
                 <Text style={[styles.nextMeta, { color: theme.primaryForeground }]}>
-                  {nextDose.medication.dosage} · Lịch {journey?.name ?? 'đang theo dõi'}
+                  {nextDose.medication.dosage} · Lịch {journey?.name ?? 'uống hiện tại'}
                 </Text>
               </View>
               <View style={styles.upcomingBadge}>
@@ -244,7 +244,7 @@ export default function HomeScreen() {
               <Pressable
                 onPress={() => openReminder(nextDose.medication, nextDose.time)}
                 style={({ pressed }) => [styles.confirmButton, pressed && styles.pressed]}>
-                <Text style={[styles.confirmText, { color: theme.primary }]}>Xác nhận uống</Text>
+                <Text style={[styles.confirmText, { color: theme.primary }]}>Xong cữ này</Text>
               </Pressable>
               <Pressable style={({ pressed }) => [styles.detailButton, pressed && styles.pressed]}>
                 <Text style={styles.detailText}>Chi tiết</Text>
@@ -275,10 +275,10 @@ export default function HomeScreen() {
           </View>
           <View style={styles.testPanelCopy}>
             <Text style={[styles.testPanelTitle, { color: theme.text }]}>
-              Kiểm tra hệ thống nhắc
+              Test thử nhắc nhở
             </Text>
             <Text style={[styles.testPanelSubtitle, { color: theme.textSecondary }]}>
-              Notification được gửi sau 10 giây.
+              Thông báo sẽ nổ sau 10 giây.
             </Text>
           </View>
         </View>
@@ -295,7 +295,7 @@ export default function HomeScreen() {
           ]}>
           <AppIcon name="bell" color={theme.background} size={16} />
           <Text style={[styles.testPrimaryText, { color: theme.background }]}>
-            Mở reminder modal ngay
+            Mở thử lời nhắc
           </Text>
         </Pressable>
 

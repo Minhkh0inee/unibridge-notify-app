@@ -58,7 +58,7 @@ export default function AddMedicationScreen() {
           <AppIcon name="pill" color={theme.primaryForeground} size={20} />
         </View>
         <Text style={[styles.calloutText, { color: theme.text }]}>
-          Cho Mèo biết bạn đang uống thuốc gì để nhắc đúng giờ.
+          Ghi chú lại thuốc để Mèo nhắc bạn đúng giờ nha.
         </Text>
       </View>
 
@@ -82,7 +82,7 @@ export default function AddMedicationScreen() {
             style={[styles.input, { backgroundColor: theme.backgroundElement, borderColor: theme.border, color: theme.text }]}
           />
         </Field>
-        <Field label="Liều mỗi lần">
+        <Field label="Liều lượng">
           <TextInput
             value={dosage}
             onChangeText={setDosage}
@@ -93,7 +93,7 @@ export default function AddMedicationScreen() {
         </Field>
       </View>
 
-      <Field label="Hướng dẫn">
+      <Field label="Cách uống">
         <View style={styles.chips}>
           {instructions.map((chip) => {
             const isSelected = selectedInstruction === chip;

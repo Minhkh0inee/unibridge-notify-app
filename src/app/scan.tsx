@@ -39,13 +39,13 @@ export default function ScanScreen() {
         <View style={styles.cornerTopRight} />
         <View style={styles.cornerBottomLeft} />
         <View style={styles.cornerBottomRight} />
-        <Text style={styles.scanFrameText}>Khung máy ảnh</Text>
+        <Text style={styles.scanFrameText}>Canh đơn thuốc vào đây nha</Text>
       </View>
 
       <View style={[styles.callout, { backgroundColor: theme.primarySoft, borderColor: `${theme.primary}26` }]}>
         <Mascot mood="happy" size={58} />
         <Text style={[styles.calloutText, { color: theme.text }]}>
-          Mèo đọc được 3 thuốc. Bạn kiểm tra giúp Mèo, chỗ nào chưa chắc đã được đánh dấu.
+          Mèo soi ra 3 loại thuốc. Bạn check lại xíu nha, chỗ nào Mèo cấn cấn thì Mèo có note lại rồi đó.
         </Text>
       </View>
 
@@ -57,11 +57,11 @@ export default function ScanScreen() {
 
       <Pressable style={[styles.addMissing, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
         <AppIcon name="add" color={theme.textSecondary} size={16} />
-        <Text style={[styles.addMissingText, { color: theme.textSecondary }]}>Thêm thuốc bị thiếu</Text>
+        <Text style={[styles.addMissingText, { color: theme.textSecondary }]}>Thêm thuốc Mèo bỏ sót</Text>
       </Pressable>
 
       <Pressable style={[styles.saveButton, { backgroundColor: theme.text }]} onPress={() => router.push('/')}>
-        <Text style={[styles.saveText, { color: theme.background }]}>Xác nhận và tạo lịch</Text>
+        <Text style={[styles.saveText, { color: theme.background }]}>Xong! Tạo lịch thôi</Text>
       </Pressable>
     </ScrollView>
   );
@@ -104,7 +104,7 @@ function OcrCard({
       </View>
       {low && (
         <Text style={[styles.warningText, { color: theme.warning }]}>
-          Thông tin này chưa chắc chắn, bạn kiểm tra lại giúp Mèo.
+          Chỗ này Mèo hơi lú, bạn check lại cho chuẩn nha.
         </Text>
       )}
     </View>

@@ -14,7 +14,7 @@ const periodIcon: Record<ScheduledDose['period'], AppIconName> = {
 
 const statusText: Record<ScheduledDose['status'], { label: string; icon: AppIconName; tone: 'success' | 'warning' | 'primary' | 'danger' | 'muted' }> = {
   taken: { label: 'Đã uống', icon: 'check', tone: 'success' },
-  ignored: { label: 'Bỏ qua', icon: 'warning', tone: 'danger' },
+  ignored: { label: 'Bỏ lỡ', icon: 'warning', tone: 'danger' },
   pending: { label: 'Chờ uống', icon: 'clock', tone: 'primary' },
   upcoming: { label: 'Sắp tới', icon: 'clock', tone: 'muted' },
   late: { label: 'Trễ', icon: 'warning', tone: 'warning' },
