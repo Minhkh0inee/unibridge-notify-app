@@ -335,48 +335,84 @@ export default function AddMedicationScreen() {
               />
             </Field>
 
-      <View style={styles.twoCols}>
-        <Field label="Dạng thuốc">
-          <TextInput
-            value={formType}
-            onChangeText={setFormType}
-            placeholder="VD: Viên nang"
-            placeholderTextColor={theme.textSecondary}
-            style={[styles.input, { backgroundColor: theme.backgroundElement, borderColor: theme.border, color: theme.text }]}
-          />
-        </Field>
-        <Field label="Liều lượng">
-          <TextInput
-            value={dosage}
-            onChangeText={setDosage}
-            placeholder="VD: 1 viên"
-            placeholderTextColor={theme.textSecondary}
-            style={[styles.input, { backgroundColor: theme.backgroundElement, borderColor: theme.border, color: theme.text }]}
-          />
-        </Field>
+            <View style={styles.twoCols}>
+              <Field label="Dạng thuốc">
+                <TextInput
+                  value={medication.formType}
+                  onChangeText={(formType) => updateMedication(medication.id, { formType })}
+                  placeholder="VD: Viên nang"
+                  placeholderTextColor={theme.textSecondary}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: theme.background,
+                      borderColor: theme.border,
+                      color: theme.text,
+                    },
+                  ]}
+                />
+              </Field>
+              <Field label="Liều lượng">
+                <TextInput
+                  value={medication.dosage}
+                  onChangeText={(dosage) => updateMedication(medication.id, { dosage })}
+                  placeholder="VD: 1 viên"
+                  placeholderTextColor={theme.textSecondary}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: theme.background,
+                      borderColor: theme.border,
+                      color: theme.text,
+                    },
+                  ]}
+                />
+              </Field>
+            </View>
+
+            <Field label="Cách uống">
+              <View style={styles.chips}>
+                {instructions.map((chip) => {
+                  const isSelected = medication.instruction === chip;
+                  return (
+                    <Pressable
+                      key={chip}
+                      onPress={() => updateMedication(medication.id, { instruction: chip })}
+                      style={[
+                        styles.chip,
+                        {
+                          backgroundColor: isSelected ? theme.text : theme.background,
+                          borderColor: isSelected ? theme.text : theme.border,
+                        },
+                      ]}>
+                      <Text
+                        style={[
+                          styles.chipText,
+                          { color: isSelected ? theme.background : theme.text },
+                        ]}>
+                        {chip}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </Field>
+          </View>
+        ))}
       </View>
 
-      <Field label="Cách uống">
-        <View style={styles.chips}>
-          {instructions.map((chip) => {
-            const isSelected = selectedInstruction === chip;
-            return (
-              <Pressable
-                key={chip}
-                onPress={() => setSelectedInstruction(chip)}
-                style={[
-                  styles.chip,
-                  {
-                    backgroundColor: isSelected ? theme.text : theme.backgroundElement,
-                    borderColor: isSelected ? theme.text : theme.border,
-                  },
-                ]}>
-                <Text style={[styles.chipText, { color: isSelected ? theme.background : theme.text }]}>{chip}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </Field>
+      <Pressable
+        accessibilityLabel="Thêm thuốc mới"
+        onPress={addMedication}
+        style={[
+          styles.addMedicationButton,
+          { borderColor: theme.primary, backgroundColor: `${theme.primary}11` },
+        ]}>
+        <AppIcon name="plus" color={theme.primary} size={16} />
+        <Text style={[styles.addMedicationText, { color: theme.primary }]}>
+          Thêm thuốc khác
+        </Text>
+      </Pressable>
 
       <Field label="Giờ uống">
         <View style={[styles.timeList, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
