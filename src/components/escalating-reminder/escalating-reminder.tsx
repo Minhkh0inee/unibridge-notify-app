@@ -25,7 +25,10 @@ import { verifyMedicationPhoto } from "@/services/medication-verification";
 
 import { CameraCapture } from "./camera-capture";
 import type { EscalationLevel } from "./escalation-levels";
-import { LEVEL_CONFIGS } from "./escalation-levels";
+import {
+  LEVEL_CONFIGS,
+  TEST_ADVANCE_LEVEL_ON_IGNORE,
+} from "./escalation-levels";
 import { useEscalation } from "./use-escalation";
 
 export interface EscalatingReminderProps {
@@ -60,7 +63,7 @@ export function EscalatingReminder({
   escalationConfig,
   onDismiss,
 }: EscalatingReminderProps) {
-  const { level, cleanup } = useEscalation(
+  const { level, advanceLevel, cleanup } = useEscalation(
     escalationConfig,
     visible,
   );
@@ -95,6 +98,29 @@ export function EscalatingReminder({
   }, [visible]);
 
   const config = LEVEL_CONFIGS[level];
+
+  async function handleIgnore() {
+    if (isLogging || isVerifying || level === 4) return;
+
+    if (TEST_ADVANCE_LEVEL_ON_IGNORE) {
+      advanceLevel();
+      return;
+    }
+
+    setIsLogging(true);
+    try {
+      await logDose({
+        medicationId: medication.id,
+        scheduledTime,
+        actionTakenAt: new Date().toISOString(),
+        status: "ignored",
+      });
+      cleanup();
+      onDismiss();
+    } catch {
+      setIsLogging(false);
+    }
+  }
 
   async function handlePhotoConfirm(photoUri: string) {
     if (isLogging || isVerifying) return;
@@ -246,6 +272,28 @@ export function EscalatingReminder({
                   <Text style={styles.laterButtonTitle}>Nhắc tôi sau</Text>
                   <Text style={styles.laterButtonHint}>
                     Đang bận hoặc để quên thuốc
+                  </Text>
+                </Pressable>
+              )}
+
+              {level < 4 && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: isLogging || isVerifying }}
+                  disabled={isLogging || isVerifying}
+                  onPress={() => void handleIgnore()}
+                  style={[
+                    styles.ignoreButton,
+                    (isLogging || isVerifying) && styles.buttonDisabled,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.ignoreButtonText,
+                      { color: config.textColor },
+                    ]}
+                  >
+                    Bỏ qua
                   </Text>
                 </Pressable>
               )}
