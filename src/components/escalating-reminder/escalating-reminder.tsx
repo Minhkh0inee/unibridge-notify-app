@@ -322,7 +322,10 @@ export function EscalatingReminder({
 
         {viewMode === "verification-failed" && (
           <View style={styles.statusContent}>
-            <Text style={styles.statusEmoji}>🔍💊</Text>
+            <Image
+              source={require('@/assets/mascot/cat-waiting.png')}
+              style={styles.statusMascot}
+            />
             <Text style={[styles.statusTitle, { color: config.textColor }]}>
               Chưa thấy thuốc trong ảnh
             </Text>
@@ -337,7 +340,10 @@ export function EscalatingReminder({
 
         {viewMode === "verification-error" && (
           <View style={styles.statusContent}>
-            <Text style={styles.statusEmoji}>⚠️</Text>
+            <Image
+              source={require('@/assets/mascot/cat-waiting.png')}
+              style={styles.statusMascot}
+            />
             <Text style={[styles.statusTitle, { color: config.textColor }]}>
               Không thể kiểm tra ảnh
             </Text>
@@ -375,7 +381,10 @@ export function EscalatingReminder({
 
         {viewMode === "ask-later" && (
           <View style={styles.statusContent}>
-            <Text style={styles.statusEmoji}>🕰️</Text>
+            <Image
+              source={require('@/assets/mascot/cat-waiting.png')}
+              style={styles.statusMascot}
+            />
             <Text style={[styles.statusTitle, { color: config.textColor }]}>
               Khi nào Mèo nên nhắc lại?
             </Text>
@@ -416,7 +425,10 @@ export function EscalatingReminder({
 
         {viewMode === "success" && (
           <View style={[StyleSheet.absoluteFill, styles.successContent]}>
-            <Text style={styles.successEmoji}>😊✨</Text>
+            <Image
+              source={require('@/assets/mascot/cat-happy.png')}
+              style={styles.successMascot}
+            />
             <Text style={styles.successTitle}>
               Tuyệt lắm! Đã xác nhận liều thuốc.
             </Text>
@@ -442,6 +454,7 @@ const styles = StyleSheet.create({
   mascotImage: {
     width: 160,
     height: 160,
+    resizeMode: 'contain',
   },
   messageText: {
     fontSize: 22,
@@ -499,6 +512,11 @@ const styles = StyleSheet.create({
   statusEmoji: {
     fontSize: 72,
     textAlign: "center",
+  },
+  statusMascot: {
+    width: 120,
+    height: 120,
+    resizeMode: 'contain',
   },
   statusTitle: {
     fontSize: 26,
@@ -569,6 +587,11 @@ const styles = StyleSheet.create({
   successEmoji: {
     fontSize: 100,
     textAlign: "center",
+  },
+  successMascot: {
+    width: 140,
+    height: 140,
+    resizeMode: 'contain',
   },
   successTitle: {
     color: "#FFFFFF",

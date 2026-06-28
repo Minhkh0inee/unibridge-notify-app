@@ -15,7 +15,7 @@ export interface LevelConfig {
 export const LEVEL_CONFIGS: readonly [LevelConfig, LevelConfig, LevelConfig, LevelConfig, LevelConfig] = [
   {
     emoji: '😊',
-    imageSrc: null,
+    imageSrc: require('@/assets/mascot/cat-wave.png'),
     backgroundColor: '#208AEF',
     textColor: '#FFFFFF',
     text: 'Đến giờ uống thuốc rồi bạn nhé!',
@@ -23,7 +23,7 @@ export const LEVEL_CONFIGS: readonly [LevelConfig, LevelConfig, LevelConfig, Lev
   },
   {
     emoji: '😟',
-    imageSrc: null,
+    imageSrc: require('@/assets/mascot/cat-waiting.png'),
     backgroundColor: '#F5C842',
     textColor: '#1A1A1A',
     text: 'Liều thuốc vẫn đang chờ bạn. Uống ngay khi thuận tiện nhé.',
@@ -31,7 +31,7 @@ export const LEVEL_CONFIGS: readonly [LevelConfig, LevelConfig, LevelConfig, Lev
   },
   {
     emoji: '😰',
-    imageSrc: null,
+    imageSrc: require('@/assets/mascot/cat-waiting.png'),
     backgroundColor: '#F97316',
     textColor: '#FFFFFF',
     text: 'Liều này quan trọng lắm. Bạn cố gắng đừng bỏ lỡ nhé.',
@@ -39,7 +39,7 @@ export const LEVEL_CONFIGS: readonly [LevelConfig, LevelConfig, LevelConfig, Lev
   },
   {
     emoji: '😠',
-    imageSrc: null,
+    imageSrc: require('@/assets/mascot/cat-impatient.png'),
     backgroundColor: '#E53E3E',
     textColor: '#FFFFFF',
     text: 'Đã trễ một lúc rồi. Hãy ưu tiên uống thuốc ngay khi có thể.',
@@ -47,7 +47,7 @@ export const LEVEL_CONFIGS: readonly [LevelConfig, LevelConfig, LevelConfig, Lev
   },
   {
     emoji: '🚨',
-    imageSrc: null,
+    imageSrc: require('@/assets/mascot/cat-impatient.png'),
     backgroundColor: '#7F1D1D',
     textColor: '#FFFFFF',
     text: 'Bạn chưa thể uống lúc này phải không? Mình có thể nhắc lại sau.',

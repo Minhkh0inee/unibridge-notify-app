@@ -1240,7 +1240,7 @@ const styles = StyleSheet.create({
   periodDoseList: {
     gap: 8,
     marginTop: 14,
-    paddingLeft: 56,
+    paddingLeft: 72,
   },
   periodDoseRow: {
     flexDirection: "row",

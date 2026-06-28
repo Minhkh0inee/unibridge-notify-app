@@ -61,9 +61,14 @@ export function MedicationCard({ dose }: { dose: ScheduledDose }) {
 
       <View style={styles.body}>
         <View style={styles.topRow}>
-          <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
-            {dose.medication.name}
-          </Text>
+          <View style={styles.titleContainer}>
+            <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
+              {dose.medication.name}
+            </Text>
+            <Text style={[styles.meta, { color: theme.textSecondary, marginTop: 4 }]} numberOfLines={1}>
+              {dose.medication.dosage}
+            </Text>
+          </View>
           <View style={[styles.badge, { backgroundColor: badgeBg }]}>
             <AppIcon name={status.icon} color={badgeColor} size={12} />
             <Text style={[styles.badgeText, { color: badgeColor }]}>{status.label}</Text>
@@ -74,10 +79,6 @@ export function MedicationCard({ dose }: { dose: ScheduledDose }) {
           <AppIcon name={periodIcon[dose.period]} color={theme.textSecondary} size={14} />
           <Text style={[styles.meta, { color: theme.textSecondary }]}>
             {dose.period} · {dose.time}
-          </Text>
-          <View style={[styles.dot, { backgroundColor: theme.border }]} />
-          <Text style={[styles.meta, { color: theme.textSecondary }]} numberOfLines={1}>
-            {dose.medication.dosage}
           </Text>
         </View>
       </View>
@@ -128,8 +129,11 @@ const styles = StyleSheet.create({
     gap: 8,
     justifyContent: 'space-between',
   },
-  name: {
+  titleContainer: {
     flex: 1,
+    justifyContent: 'center',
+  },
+  name: {
     fontFamily: Fonts.sans,
     fontSize: 15,
     fontWeight: '700',
