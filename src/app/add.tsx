@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppIcon } from '@/components/app-icon';
@@ -9,6 +10,22 @@ import { useTheme } from '@/hooks/use-theme';
 export default function AddMedicationScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const [medName, setMedName] = useState('Amoxicillin 500mg');
+  const [formType, setFormType] = useState('Viên nang');
+  const [dosage, setDosage] = useState('1 viên');
+  const [selectedInstruction, setSelectedInstruction] = useState('Sau ăn');
+  const [morningTime, setMorningTime] = useState('08:00');
+  const [eveningTime, setEveningTime] = useState('20:00');
+
+  const instructions = ['Trước ăn', 'Sau ăn', 'Cùng bữa ăn', 'Trước khi ngủ'];
+
+  const handleContinue = () => {
+    Alert.alert(
+      'Xác nhận đơn thuốc',
+      `Tên thuốc: ${medName || 'Chưa nhập'}\nDạng thuốc: ${formType || 'Chưa nhập'}\nLiều mỗi lần: ${dosage || 'Chưa nhập'}\nHướng dẫn: ${selectedInstruction}\nGiờ uống: ${morningTime || '—'} và ${eveningTime || '—'}`,
+      [{ text: 'Đóng' }]
+    );
+  };
 
   return (
     <ScrollView
@@ -22,7 +39,6 @@ export default function AddMedicationScreen() {
           <AppIcon name="back" color={theme.text} size={16} />
         </Pressable>
         <View style={styles.headerText}>
-          <Text style={[styles.kicker, { color: theme.textSecondary }]}>Bước 1/5</Text>
           <Text style={[styles.title, { color: theme.text }]}>Thông tin thuốc</Text>
         </View>
         <Pressable onPress={() => router.push('/scan')} style={styles.scanLink}>
@@ -48,7 +64,8 @@ export default function AddMedicationScreen() {
 
       <Field label="Tên thuốc">
         <TextInput
-          defaultValue="Amoxicillin 500mg"
+          value={medName}
+          onChangeText={setMedName}
           placeholder="VD: Amoxicillin 500mg"
           placeholderTextColor={theme.textSecondary}
           style={[styles.input, { backgroundColor: theme.backgroundElement, borderColor: theme.border, color: theme.text }]}
@@ -57,13 +74,19 @@ export default function AddMedicationScreen() {
 
       <View style={styles.twoCols}>
         <Field label="Dạng thuốc">
-          <View style={[styles.input, styles.selectLike, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
-            <Text style={[styles.inputText, { color: theme.text }]}>Viên nang</Text>
-          </View>
+          <TextInput
+            value={formType}
+            onChangeText={setFormType}
+            placeholder="VD: Viên nang"
+            placeholderTextColor={theme.textSecondary}
+            style={[styles.input, { backgroundColor: theme.backgroundElement, borderColor: theme.border, color: theme.text }]}
+          />
         </Field>
         <Field label="Liều mỗi lần">
           <TextInput
-            defaultValue="1 viên"
+            value={dosage}
+            onChangeText={setDosage}
+            placeholder="VD: 1 viên"
             placeholderTextColor={theme.textSecondary}
             style={[styles.input, { backgroundColor: theme.backgroundElement, borderColor: theme.border, color: theme.text }]}
           />
@@ -72,37 +95,58 @@ export default function AddMedicationScreen() {
 
       <Field label="Hướng dẫn">
         <View style={styles.chips}>
-          {['Trước ăn', 'Sau ăn', 'Cùng bữa ăn', 'Trước khi ngủ'].map((chip, index) => (
-            <View
-              key={chip}
-              style={[
-                styles.chip,
-                {
-                  backgroundColor: index === 1 ? theme.text : theme.backgroundElement,
-                  borderColor: index === 1 ? theme.text : theme.border,
-                },
-              ]}>
-              <Text style={[styles.chipText, { color: index === 1 ? theme.background : theme.text }]}>{chip}</Text>
-            </View>
-          ))}
+          {instructions.map((chip) => {
+            const isSelected = selectedInstruction === chip;
+            return (
+              <Pressable
+                key={chip}
+                onPress={() => setSelectedInstruction(chip)}
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: isSelected ? theme.text : theme.backgroundElement,
+                    borderColor: isSelected ? theme.text : theme.border,
+                  },
+                ]}>
+                <Text style={[styles.chipText, { color: isSelected ? theme.background : theme.text }]}>{chip}</Text>
+              </Pressable>
+            );
+          })}
         </View>
       </Field>
 
       <Field label="Giờ uống">
         <View style={[styles.timeList, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
-          {['08:00', '20:00'].map((time, index) => (
-            <View key={time} style={[styles.timeRow, index === 0 && { borderBottomColor: theme.border, borderBottomWidth: 1 }]}>
-              <View style={styles.timeLabel}>
-                <AppIcon name="clock" color={theme.textSecondary} size={16} />
-                <Text style={[styles.timeText, { color: theme.text }]}>{index === 0 ? 'Sáng' : 'Tối'}</Text>
-              </View>
-              <Text style={[styles.timeValue, { color: theme.text }]}>{time}</Text>
+          <View style={styles.timeRow}>
+            <View style={styles.timeLabel}>
+              <AppIcon name="clock" color={theme.textSecondary} size={16} />
+              <Text style={[styles.timeText, { color: theme.text }]}>Sáng</Text>
             </View>
-          ))}
+            <TextInput
+              value={morningTime}
+              onChangeText={setMorningTime}
+              placeholder="08:00"
+              placeholderTextColor={theme.textSecondary}
+              style={[styles.timeValueInput, { color: theme.text }]}
+            />
+          </View>
+          <View style={[styles.timeRow, { borderTopColor: theme.border, borderTopWidth: 1 }]}>
+            <View style={styles.timeLabel}>
+              <AppIcon name="clock" color={theme.textSecondary} size={16} />
+              <Text style={[styles.timeText, { color: theme.text }]}>Tối</Text>
+            </View>
+            <TextInput
+              value={eveningTime}
+              onChangeText={setEveningTime}
+              placeholder="20:00"
+              placeholderTextColor={theme.textSecondary}
+              style={[styles.timeValueInput, { color: theme.text }]}
+            />
+          </View>
         </View>
       </Field>
 
-      <Pressable style={[styles.saveButton, { backgroundColor: theme.text }]}>
+      <Pressable onPress={handleContinue} style={[styles.saveButton, { backgroundColor: theme.text }]}>
         <Text style={[styles.saveText, { color: theme.background }]}>Tiếp tục</Text>
       </Pressable>
     </ScrollView>
@@ -263,6 +307,13 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.mono,
     fontSize: 14,
     fontWeight: '800',
+  },
+  timeValueInput: {
+    fontFamily: Fonts.mono,
+    fontSize: 14,
+    fontWeight: '800',
+    minWidth: 60,
+    textAlign: 'right',
   },
   saveButton: {
     alignItems: 'center',
