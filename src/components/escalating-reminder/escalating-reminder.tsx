@@ -1,5 +1,5 @@
 import { Image } from "expo-image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -25,10 +25,7 @@ import { verifyMedicationPhoto } from "@/services/medication-verification";
 
 import { CameraCapture } from "./camera-capture";
 import type { EscalationLevel } from "./escalation-levels";
-import {
-  LEVEL_CONFIGS,
-  TEST_ADVANCE_LEVEL_ON_IGNORE,
-} from "./escalation-levels";
+import { LEVEL_CONFIGS } from "./escalation-levels";
 import { useEscalation } from "./use-escalation";
 
 export interface EscalatingReminderProps {
@@ -70,7 +67,9 @@ export function EscalatingReminder({
   const [viewMode, setViewMode] = useState<ViewMode>("reminder");
   const [isLogging, setIsLogging] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [waitingForNextLevel, setWaitingForNextLevel] = useState(false);
   const [capturedPhotoUri, setCapturedPhotoUri] = useState<string | null>(null);
+  const ignoreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const insets = useSafeAreaInsets();
 
   // Animate background color through escalation levels
@@ -90,36 +89,39 @@ export function EscalatingReminder({
   // Reset view when modal hides
   useEffect(() => {
     if (!visible) {
+      if (ignoreTimerRef.current !== null) {
+        clearTimeout(ignoreTimerRef.current);
+        ignoreTimerRef.current = null;
+      }
       setViewMode("reminder");
       setIsLogging(false);
       setIsVerifying(false);
+      setWaitingForNextLevel(false);
       setCapturedPhotoUri(null);
     }
   }, [visible]);
 
+  useEffect(
+    () => () => {
+      if (ignoreTimerRef.current !== null) {
+        clearTimeout(ignoreTimerRef.current);
+      }
+    },
+    [],
+  );
+
   const config = LEVEL_CONFIGS[level];
 
-  async function handleIgnore() {
+  function handleIgnore() {
     if (isLogging || isVerifying || level === 4) return;
 
-    if (TEST_ADVANCE_LEVEL_ON_IGNORE) {
+    cleanup();
+    setWaitingForNextLevel(true);
+    ignoreTimerRef.current = setTimeout(() => {
+      ignoreTimerRef.current = null;
       advanceLevel();
-      return;
-    }
-
-    setIsLogging(true);
-    try {
-      await logDose({
-        medicationId: medication.id,
-        scheduledTime,
-        actionTakenAt: new Date().toISOString(),
-        status: "ignored",
-      });
-      cleanup();
-      onDismiss();
-    } catch {
-      setIsLogging(false);
-    }
+      setWaitingForNextLevel(false);
+    }, 10_000);
   }
 
   async function handlePhotoConfirm(photoUri: string) {
@@ -223,7 +225,7 @@ export function EscalatingReminder({
 
   return (
     <Modal
-      visible={visible}
+      visible={visible && !waitingForNextLevel}
       animationType="slide"
       statusBarTranslucent
       transparent

@@ -1,56 +1,49 @@
-# Welcome to your Expo app 👋
+# UniBridge Notify
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A medication adherence app built with Expo that uses escalating notifications and AI-powered photo verification to ensure medications are never missed.
 
-## Get started
+---
 
-1. Install dependencies
+## Problem Statement
 
-   ```bash
-   npm install
-   ```
+Medication non-adherence is one of the most persistent challenges in chronic illness management. Patients forget doses, dismiss reminders too easily, or have no accountable way to confirm they actually took their medication — not just silenced an alert. Caregivers and clinicians have limited visibility into real-time adherence, and standard reminder apps treat a dismissed notification the same as a taken dose.
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+## Solution Overview
 
-In the output, you'll find options to open the app in a
+UniBridge Notify replaces passive reminders with an **escalating accountability loop**:
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+1. A push notification fires at the scheduled medication time.
+2. If the user doesn't respond, the reminder escalates in urgency — changing color, intensifying sound, and increasing haptic feedback across three severity levels.
+3. To dismiss the reminder, the user takes a **photo of their medication**. An AI backend verifies the image contains the correct medication before logging the dose as taken.
+4. If photo verification is required (`requirePhotoToStop`), the Ignore button is disabled — the only way out is proof.
+5. All dose outcomes (taken, skipped, photo URI) are stored locally and surfaced on the Home screen.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+This creates a closed loop: notify → escalate → verify → log.
 
-## Get a fresh project
+---
 
-When you're ready, run:
+## Features
 
-```bash
-npm run reset-project
-```
+- **Scheduled Medication Reminders** — Daily push notifications per medication/time pair, scoped to a named Journey
+- **Escalating Urgency** — Three-level escalation (blue → yellow → red) with progressively louder sound and stronger haptics
+- **Snooze** — "Remind in 5 min" action available directly from the notification
+- **AI Photo Verification** — Camera capture sent to a vision backend; dose only logged as `taken` on high/medium confidence match
+- **Carry Confirmation** — 7pm + 9am daily reminders to confirm medication is physically on hand
+- **Dose History** — Full log of taken/skipped doses with timestamps and optional photo proof
+- **Journey Management** — Group medications under a configurable journey with per-journey escalation settings
+- **Configurable Escalation** — Set delay before first escalation, step interval between levels, and whether photo is required to dismiss
+- **Cross-platform** — iOS, Android, and web (static export)
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-### Other setup steps
+## Documentation
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+| File | Contents |
+|---|---|
+| [SETUP.md](./SETUP.md) | Installation, environment variables, iOS pod setup |
+| [RUN.md](./RUN.md) | Dev server commands, platform-specific run notes |
+| [USER_GUIDE.md](./USER_GUIDE.md) | How to use the app — screens, reminders, photo verification |
+| [TECH_STACK.md](./TECH_STACK.md) | Full library list with versions and purpose |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | Directory structure, data flow, notification pipeline, state machines |
