@@ -13,6 +13,9 @@ export function ProgressRing({
   const clamped = Math.max(0, Math.min(1, value));
   const percent = Math.round(clamped * 100);
   const borderWidth = Math.max(5, Math.round(size * 0.1));
+  const completedSegments = percent === 0 ? 0 : Math.min(4, Math.ceil(percent / 25));
+  const baseColor = theme.primarySoft;
+  const progressColor = theme.primary;
 
   return (
     <View
@@ -23,10 +26,11 @@ export function ProgressRing({
           height: size,
           borderRadius: size / 2,
           borderWidth,
-          borderColor: theme.primarySoft,
-          borderTopColor: theme.primary,
-          borderRightColor: percent > 35 ? theme.primary : theme.primarySoft,
-          borderBottomColor: percent > 70 ? theme.primary : theme.primarySoft,
+          borderColor: baseColor,
+          borderTopColor: completedSegments >= 1 ? progressColor : baseColor,
+          borderRightColor: completedSegments >= 2 ? progressColor : baseColor,
+          borderBottomColor: completedSegments >= 3 ? progressColor : baseColor,
+          borderLeftColor: completedSegments >= 4 ? progressColor : baseColor,
         },
       ]}>
       <Text style={[styles.text, { color: theme.text }]}>{percent}%</Text>
@@ -38,11 +42,9 @@ const styles = StyleSheet.create({
   ring: {
     alignItems: 'center',
     justifyContent: 'center',
-    transform: [{ rotate: '45deg' }],
   },
   text: {
     fontSize: 11,
     fontWeight: '800',
-    transform: [{ rotate: '-45deg' }],
   },
 });
