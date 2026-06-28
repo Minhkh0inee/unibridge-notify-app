@@ -18,7 +18,7 @@ export const LEVEL_CONFIGS: readonly [LevelConfig, LevelConfig, LevelConfig, Lev
     imageSrc: null,
     backgroundColor: '#208AEF',
     textColor: '#FFFFFF',
-    text: 'Time to take your medicine!',
+    text: 'Đến giờ uống thuốc rồi bạn nhé!',
     soundVolume: 0.3,
   },
   {
@@ -26,7 +26,7 @@ export const LEVEL_CONFIGS: readonly [LevelConfig, LevelConfig, LevelConfig, Lev
     imageSrc: null,
     backgroundColor: '#F5C842',
     textColor: '#1A1A1A',
-    text: "You've been waiting — please take your dose now.",
+    text: 'Liều thuốc vẫn đang chờ bạn. Uống ngay khi thuận tiện nhé.',
     soundVolume: 0.6,
   },
   {
@@ -34,7 +34,7 @@ export const LEVEL_CONFIGS: readonly [LevelConfig, LevelConfig, LevelConfig, Lev
     imageSrc: null,
     backgroundColor: '#F97316',
     textColor: '#FFFFFF',
-    text: "This is important — don't skip your dose.",
+    text: 'Liều này quan trọng lắm. Bạn cố gắng đừng bỏ lỡ nhé.',
     soundVolume: 0.75,
   },
   {
@@ -42,7 +42,7 @@ export const LEVEL_CONFIGS: readonly [LevelConfig, LevelConfig, LevelConfig, Lev
     imageSrc: null,
     backgroundColor: '#E53E3E',
     textColor: '#FFFFFF',
-    text: "You're putting your health at risk!",
+    text: 'Đã trễ một lúc rồi. Hãy ưu tiên uống thuốc ngay khi có thể.',
     soundVolume: 0.9,
   },
   {
@@ -50,7 +50,7 @@ export const LEVEL_CONFIGS: readonly [LevelConfig, LevelConfig, LevelConfig, Lev
     imageSrc: null,
     backgroundColor: '#7F1D1D',
     textColor: '#FFFFFF',
-    text: "You're skipping your dose! The bacteria are becoming resistant!",
+    text: 'Bạn chưa thể uống lúc này phải không? Mình có thể nhắc lại sau.',
     soundVolume: 1.0,
   },
 ];

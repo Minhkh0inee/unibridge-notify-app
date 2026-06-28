@@ -15,6 +15,7 @@ export const SNOOZE_REMINDER_ACTION = 'SNOOZE_REMINDER';
 export interface MedicationNotificationData extends Record<string, unknown> {
   type: typeof MEDICATION_NOTIFICATION_TYPE;
   medicationId: string;
+  medicationIds: string[];
   scheduledTime: string;
 }
 
@@ -108,19 +109,29 @@ function parseReminderTime(value: string): { hour: number; minute: number } | nu
 }
 
 function notificationContent(
-  medication: Medication,
+  medications: Medication[],
   scheduledTime: string
 ): Notifications.NotificationContentInput {
+  const primaryMedication = medications[0];
+  const visibleMedications = medications.slice(0, 3);
+  const remainingCount = medications.length - visibleMedications.length;
+  const doseSummary = visibleMedications
+    .map((medication) => `${medication.name} · ${medication.dosage}`)
+    .join(' • ');
   const data: MedicationNotificationData = {
     type: MEDICATION_NOTIFICATION_TYPE,
-    medicationId: medication.id,
+    medicationId: primaryMedication.id,
+    medicationIds: medications.map((medication) => medication.id),
     scheduledTime,
   };
 
   return {
-    title: '💊 Đến giờ uống thuốc',
-    subtitle: `${medication.name} · ${scheduledTime}`,
-    body: `Uống ${medication.dosage}. Mở lời nhắc để xác nhận liều thuốc.`,
+    title:
+      medications.length === 1
+        ? `💊 Đến giờ uống ${primaryMedication.name}`
+        : `💊 Đến giờ uống ${medications.length} loại thuốc`,
+    subtitle: `${scheduledTime} · Liều thuốc của bạn`,
+    body: `${doseSummary}${remainingCount > 0 ? ` • +${remainingCount} thuốc khác` : ''}`,
     data,
     sound: 'default',
     categoryIdentifier: MEDICATION_CATEGORY_ID,
@@ -154,32 +165,39 @@ export async function scheduleJourneyNotificationsAsync(journey: Journey): Promi
 
   await cancelPreviousMedicationNotificationsAsync();
 
-  const identifiers: string[] = [];
+  const medicationsByTime = new Map<string, Medication[]>();
   for (const medication of journey.medications) {
     for (const scheduledTime of medication.reminderTimes) {
-      const time = parseReminderTime(scheduledTime);
-      if (!time) {
-        if (__DEV__) {
-          console.warn(`Skipping invalid medication reminder time: ${scheduledTime}`);
-        }
-        continue;
-      }
+      const medications = medicationsByTime.get(scheduledTime) ?? [];
+      medications.push(medication);
+      medicationsByTime.set(scheduledTime, medications);
+    }
+  }
 
-      try {
-        const identifier = await Notifications.scheduleNotificationAsync({
-          content: notificationContent(medication, scheduledTime),
-          trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.DAILY,
-            hour: time.hour,
-            minute: time.minute,
-            channelId: MEDICATION_CHANNEL_ID,
-          },
-        });
-        identifiers.push(identifier);
-      } catch (error) {
-        if (__DEV__) {
-          console.warn('Unable to schedule medication notification', error);
-        }
+  const identifiers: string[] = [];
+  for (const [scheduledTime, medications] of medicationsByTime) {
+    const time = parseReminderTime(scheduledTime);
+    if (!time) {
+      if (__DEV__) {
+        console.warn(`Skipping invalid medication reminder time: ${scheduledTime}`);
+      }
+      continue;
+    }
+
+    try {
+      const identifier = await Notifications.scheduleNotificationAsync({
+        content: notificationContent(medications, scheduledTime),
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour: time.hour,
+          minute: time.minute,
+          channelId: MEDICATION_CHANNEL_ID,
+        },
+      });
+      identifiers.push(identifier);
+    } catch (error) {
+      if (__DEV__) {
+        console.warn('Unable to schedule medication notification', error);
       }
     }
   }
@@ -189,7 +207,7 @@ export async function scheduleJourneyNotificationsAsync(journey: Journey): Promi
 }
 
 export async function scheduleTestNotificationAsync(
-  medication: Medication,
+  medicationOrDose: Medication | Medication[],
   scheduledTime: string
 ): Promise<TestNotificationResult> {
   const granted = await requestNotificationPermissionsAsync();
@@ -199,9 +217,16 @@ export async function scheduleTestNotificationAsync(
     );
   }
 
+  const medications = Array.isArray(medicationOrDose)
+    ? medicationOrDose
+    : [medicationOrDose];
+  if (medications.length === 0) {
+    throw new Error('Liều thuốc chưa có loại thuốc nào.');
+  }
+
   const scheduledFor = new Date(Date.now() + 10_000);
   const identifier = await Notifications.scheduleNotificationAsync({
-    content: notificationContent(medication, scheduledTime),
+    content: notificationContent(medications, scheduledTime),
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DATE,
       date: scheduledFor,
@@ -215,6 +240,38 @@ export async function scheduleTestNotificationAsync(
   }
 
   return { identifier, scheduledFor };
+}
+
+export async function scheduleMedicationReminderAfterAsync(
+  medication: Medication,
+  scheduledTime: string,
+  seconds: number,
+  reason: 'busy' | 'left-at-home'
+): Promise<Date> {
+  const granted = await requestNotificationPermissionsAsync();
+  if (!granted) {
+    throw new Error('Quyền thông báo đang tắt. Hãy bật lại trong Cài đặt.');
+  }
+
+  const scheduledFor = new Date(Date.now() + seconds * 1000);
+  const content = notificationContent([medication], scheduledTime);
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      ...content,
+      title: '💊 Nhắc lại liều thuốc',
+      subtitle:
+        reason === 'left-at-home'
+          ? 'Bạn đã về gần thuốc chưa?'
+          : 'Bạn đã rảnh để uống thuốc chưa?',
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+      seconds,
+      channelId: MEDICATION_CHANNEL_ID,
+    },
+  });
+
+  return scheduledFor;
 }
 
 export async function scheduleTestCarryNotificationAsync(): Promise<Date> {
@@ -331,6 +388,9 @@ export function getMedicationNotificationData(
   return {
     type: MEDICATION_NOTIFICATION_TYPE,
     medicationId: data.medicationId,
+    medicationIds: Array.isArray(data.medicationIds)
+      ? data.medicationIds.filter((id): id is string => typeof id === 'string')
+      : [data.medicationId],
     scheduledTime: data.scheduledTime,
   };
 }

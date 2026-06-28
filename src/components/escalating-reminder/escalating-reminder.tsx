@@ -1,23 +1,35 @@
-import { Image } from 'expo-image';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image } from "expo-image";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import Animated, {
   interpolateColor,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
-} from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+} from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Spacing } from '@/constants/theme';
-import type { EscalationConfig, Medication } from '@/data/types';
-import { logDose } from '@/data/storage';
-import { verifyMedicationPhoto } from '@/services/medication-verification';
+import { Spacing } from "@/constants/theme";
+import { logDose } from "@/data/storage";
+import type { EscalationConfig, Medication } from "@/data/types";
+import { scheduleMedicationReminderAfterAsync } from "@/notifications/notifications";
+import { verifyMedicationPhoto } from "@/services/medication-verification";
 
-import { LEVEL_CONFIGS, TEST_ADVANCE_LEVEL_ON_IGNORE } from './escalation-levels';
-import type { EscalationLevel } from './escalation-levels';
-import { useEscalation } from './use-escalation';
-import { CameraCapture } from './camera-capture';
+import { CameraCapture } from "./camera-capture";
+import type { EscalationLevel } from "./escalation-levels";
+import {
+  LEVEL_CONFIGS,
+  TEST_ADVANCE_LEVEL_ON_IGNORE,
+} from "./escalation-levels";
+import { useEscalation } from "./use-escalation";
 
 export interface EscalatingReminderProps {
   visible: boolean;
@@ -28,12 +40,13 @@ export interface EscalatingReminderProps {
 }
 
 type ViewMode =
-  | 'reminder'
-  | 'camera'
-  | 'verifying'
-  | 'verification-failed'
-  | 'verification-error'
-  | 'success';
+  | "reminder"
+  | "camera"
+  | "verifying"
+  | "verification-failed"
+  | "verification-error"
+  | "ask-later"
+  | "success";
 
 function MascotDisplay({ level }: { level: EscalationLevel }) {
   const config = LEVEL_CONFIGS[level];
@@ -50,8 +63,11 @@ export function EscalatingReminder({
   escalationConfig,
   onDismiss,
 }: EscalatingReminderProps) {
-  const { level, advanceLevel, cleanup } = useEscalation(escalationConfig, visible);
-  const [viewMode, setViewMode] = useState<ViewMode>('reminder');
+  const { level, advanceLevel, cleanup } = useEscalation(
+    escalationConfig,
+    visible,
+  );
+  const [viewMode, setViewMode] = useState<ViewMode>("reminder");
   const [isLogging, setIsLogging] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [capturedPhotoUri, setCapturedPhotoUri] = useState<string | null>(null);
@@ -67,14 +83,14 @@ export function EscalatingReminder({
     backgroundColor: interpolateColor(
       progress.value,
       [0, 1, 2, 3, 4],
-      ['#208AEF', '#F5C842', '#F97316', '#E53E3E', '#7F1D1D']
+      ["#208AEF", "#F5C842", "#F97316", "#E53E3E", "#7F1D1D"],
     ),
   }));
 
   // Reset view when modal hides
   useEffect(() => {
     if (!visible) {
-      setViewMode('reminder');
+      setViewMode("reminder");
       setIsLogging(false);
       setIsVerifying(false);
       setCapturedPhotoUri(null);
@@ -100,7 +116,7 @@ export function EscalatingReminder({
         medicationId: medication.id,
         scheduledTime,
         actionTakenAt: new Date().toISOString(),
-        status: 'ignored',
+        status: "ignored",
       });
       cleanup();
       onDismiss();
@@ -114,13 +130,13 @@ export function EscalatingReminder({
 
     setCapturedPhotoUri(photoUri);
     setIsVerifying(true);
-    setViewMode('verifying');
+    setViewMode("verifying");
 
     try {
       const result = await verifyMedicationPhoto(photoUri);
-      console.log('[MedicationVerification] result:', result);
-      if (!result.containsMedication || result.confidence === 'low') {
-        setViewMode('verification-failed');
+      console.log("[MedicationVerification] result:", result);
+      if (!result.containsMedication || result.confidence === "low") {
+        setViewMode("verification-failed");
         return;
       }
 
@@ -130,15 +146,15 @@ export function EscalatingReminder({
         scheduledTime,
         actionTakenAt: new Date().toISOString(),
         photoUri,
-        status: 'taken',
+        status: "taken",
       });
       cleanup();
-      setViewMode('success');
+      setViewMode("success");
       await new Promise((resolve) => setTimeout(resolve, 1500));
       onDismiss();
     } catch (error) {
-      console.warn('[MedicationVerification] error:', error);
-      setViewMode('verification-error');
+      console.warn("[MedicationVerification] error:", error);
+      setViewMode("verification-error");
       setIsLogging(false);
     } finally {
       setIsVerifying(false);
@@ -148,7 +164,7 @@ export function EscalatingReminder({
   function handleRetakePhoto() {
     if (isLogging || isVerifying) return;
     setCapturedPhotoUri(null);
-    setViewMode('camera');
+    setViewMode("camera");
   }
 
   async function handleManualConfirm() {
@@ -161,7 +177,7 @@ export function EscalatingReminder({
         scheduledTime,
         actionTakenAt: new Date().toISOString(),
         photoUri: capturedPhotoUri ?? undefined,
-        status: 'taken',
+        status: "taken",
       });
       cleanup();
       onDismiss();
@@ -170,10 +186,53 @@ export function EscalatingReminder({
     }
   }
 
+  function openAskLater() {
+    if (isLogging || isVerifying) return;
+    cleanup();
+    setViewMode("ask-later");
+  }
+
+  async function handleAskLater(
+    seconds: number,
+    reason: "busy" | "left-at-home",
+  ) {
+    if (isLogging) return;
+
+    setIsLogging(true);
+    try {
+      const scheduledFor = await scheduleMedicationReminderAfterAsync(
+        medication,
+        scheduledTime,
+        seconds,
+        reason,
+      );
+      cleanup();
+      onDismiss();
+      Alert.alert(
+        "Đã hẹn nhắc lại",
+        `Mèo sẽ nhắc bạn lúc ${scheduledFor.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}.`,
+      );
+    } catch (error) {
+      setIsLogging(false);
+      Alert.alert(
+        "Chưa đặt được lời nhắc",
+        error instanceof Error ? error.message : "Bạn thử lại giúp mình nhé.",
+      );
+    }
+  }
+
   return (
-    <Modal visible={visible} animationType="slide" statusBarTranslucent transparent>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      statusBarTranslucent
+      transparent
+    >
       <Animated.View style={[StyleSheet.absoluteFill, animatedBg]}>
-        {viewMode === 'reminder' && (
+        {viewMode === "reminder" && (
           <View
             style={[
               styles.content,
@@ -181,103 +240,186 @@ export function EscalatingReminder({
                 paddingTop: insets.top + Spacing.six,
                 paddingBottom: insets.bottom + Spacing.four,
               },
-            ]}>
+            ]}
+          >
             <MascotDisplay level={level} />
 
-            <Text style={[styles.messageText, { color: config.textColor }]}>{config.text}</Text>
+            <Text style={[styles.messageText, { color: config.textColor }]}>
+              {config.text}
+            </Text>
 
             <View style={styles.buttons}>
               <Pressable
-                onPress={() => setViewMode('camera')}
+                onPress={() => setViewMode("camera")}
                 disabled={isLogging}
-                style={[styles.primaryButton, isLogging && styles.buttonDisabled]}>
-                <Text style={styles.primaryButtonText}>📷 Photo confirm dose taken</Text>
+                style={[
+                  styles.primaryButton,
+                  isLogging && styles.buttonDisabled,
+                ]}
+              >
+                <Text style={styles.primaryButtonText}>
+                  📷 Chụp ảnh xác nhận
+                </Text>
               </Pressable>
+
+              {level === 4 && (
+                <Pressable
+                  onPress={openAskLater}
+                  disabled={isLogging}
+                  style={[
+                    styles.laterButton,
+                    isLogging && styles.buttonDisabled,
+                  ]}
+                >
+                  <Text style={styles.laterButtonTitle}>Nhắc tôi sau</Text>
+                  <Text style={styles.laterButtonHint}>
+                    Đang bận hoặc để quên thuốc
+                  </Text>
+                </Pressable>
+              )}
 
               <Pressable
                 onPress={handleIgnore}
                 disabled={ignoreDisabled}
                 accessibilityState={{ disabled: ignoreDisabled }}
-                style={[styles.ignoreButton, ignoreDisabled && styles.ignoreButtonDimmed]}>
+                style={[
+                  styles.ignoreButton,
+                  ignoreDisabled && styles.ignoreButtonDimmed,
+                ]}
+              >
                 <Text
                   style={[
                     styles.ignoreButtonText,
                     { color: config.textColor },
                     ignoreDisabled && styles.ignoreButtonTextDimmed,
-                  ]}>
-                  Ignore
+                  ]}
+                >
+                  Bỏ qua
                 </Text>
               </Pressable>
             </View>
           </View>
         )}
 
-        {viewMode === 'camera' && (
+        {viewMode === "camera" && (
           <CameraCapture
             onCapture={handlePhotoConfirm}
-            onCancel={() => setViewMode('reminder')}
+            onCancel={() => setViewMode("reminder")}
           />
         )}
 
-        {viewMode === 'verifying' && (
+        {viewMode === "verifying" && (
           <View style={styles.statusContent}>
             <ActivityIndicator size="large" color={config.textColor} />
             <Text style={[styles.statusTitle, { color: config.textColor }]}>
-              Verifying your dose...
+              Đang kiểm tra liều thuốc...
             </Text>
             <Text style={[styles.statusBody, { color: config.textColor }]}>
-              Keep this screen open while we check your photo.
+              Giữ màn hình này mở trong lúc Mèo kiểm tra ảnh nhé.
             </Text>
           </View>
         )}
 
-        {viewMode === 'verification-failed' && (
+        {viewMode === "verification-failed" && (
           <View style={styles.statusContent}>
             <Text style={styles.statusEmoji}>🔍💊</Text>
             <Text style={[styles.statusTitle, { color: config.textColor }]}>
-              No pill detected!
+              Chưa thấy thuốc trong ảnh
             </Text>
             <Text style={[styles.statusBody, { color: config.textColor }]}>
-              Make sure your medication is clearly visible and try again.
+              Hãy đặt thuốc ở nơi đủ sáng, nhìn rõ rồi thử chụp lại nhé.
             </Text>
             <Pressable onPress={handleRetakePhoto} style={styles.primaryButton}>
-              <Text style={styles.primaryButtonText}>Retake Photo</Text>
+              <Text style={styles.primaryButtonText}>Chụp lại ảnh</Text>
             </Pressable>
           </View>
         )}
 
-        {viewMode === 'verification-error' && (
+        {viewMode === "verification-error" && (
           <View style={styles.statusContent}>
             <Text style={styles.statusEmoji}>⚠️</Text>
             <Text style={[styles.statusTitle, { color: config.textColor }]}>
-              Verification failed
+              Không thể kiểm tra ảnh
             </Text>
             <Text style={[styles.statusBody, { color: config.textColor }]}>
-              Retake the photo or confirm manually as a last resort.
+              Bạn có thể chụp lại hoặc tự xác nhận nếu đã uống thuốc.
             </Text>
             <View style={styles.statusButtons}>
               <Pressable
                 onPress={handleRetakePhoto}
                 disabled={isLogging}
-                style={[styles.primaryButton, isLogging && styles.buttonDisabled]}>
-                <Text style={styles.primaryButtonText}>Retake Photo</Text>
+                style={[
+                  styles.primaryButton,
+                  isLogging && styles.buttonDisabled,
+                ]}
+              >
+                <Text style={styles.primaryButtonText}>Chụp lại ảnh</Text>
               </Pressable>
               <Pressable
                 onPress={handleManualConfirm}
                 disabled={isLogging}
-                style={[styles.manualButton, isLogging && styles.buttonDisabled]}>
-                <Text style={[styles.manualButtonText, { color: config.textColor }]}>
-                  {isLogging ? 'Saving…' : 'Confirm Manually'}
+                style={[
+                  styles.manualButton,
+                  isLogging && styles.buttonDisabled,
+                ]}
+              >
+                <Text
+                  style={[styles.manualButtonText, { color: config.textColor }]}
+                >
+                  {isLogging ? "Đang lưu…" : "Tự xác nhận đã uống"}
                 </Text>
               </Pressable>
             </View>
           </View>
         )}
 
-        {viewMode === 'success' && (
+        {viewMode === "ask-later" && (
+          <View style={styles.statusContent}>
+            <Text style={styles.statusEmoji}>🕰️</Text>
+            <Text style={[styles.statusTitle, { color: config.textColor }]}>
+              Khi nào Mèo nên nhắc lại?
+            </Text>
+            <Text style={[styles.statusBody, { color: config.textColor }]}>
+              Không sao cả — chọn tình huống phù hợp nhất với bạn lúc này.
+            </Text>
+            <View style={styles.laterOptions}>
+              <Pressable
+                disabled={isLogging}
+                onPress={() => void handleAskLater(30 * 60, "busy")}
+                style={[styles.laterOption, isLogging && styles.buttonDisabled]}
+              >
+                <View>
+                  <Text style={styles.laterOptionTitle}>Đang bận một chút</Text>
+                  <Text style={styles.laterOptionBody}>
+                    Nhắc lại sau 30 phút
+                  </Text>
+                </View>
+                <Text style={styles.laterOptionTime}>30p</Text>
+              </Pressable>
+              <Pressable
+                disabled={isLogging}
+                onPress={() => void handleAskLater(60 * 60, "left-at-home")}
+                style={[styles.laterOption, isLogging && styles.buttonDisabled]}
+              >
+                <View>
+                  <Text style={styles.laterOptionTitle}>
+                    Để quên thuốc ở nhà
+                  </Text>
+                  <Text style={styles.laterOptionBody}>Nhắc lại sau 1 giờ</Text>
+                </View>
+                <Text style={styles.laterOptionTime}>1h</Text>
+              </Pressable>
+            </View>
+            {isLogging && <ActivityIndicator color={config.textColor} />}
+          </View>
+        )}
+
+        {viewMode === "success" && (
           <View style={[StyleSheet.absoluteFill, styles.successContent]}>
             <Text style={styles.successEmoji}>😊✨</Text>
-            <Text style={styles.successTitle}>Great job! Dose confirmed!</Text>
+            <Text style={styles.successTitle}>
+              Tuyệt lắm! Đã xác nhận liều thuốc.
+            </Text>
           </View>
         )}
       </Animated.View>
@@ -288,14 +430,14 @@ export function EscalatingReminder({
 const styles = StyleSheet.create({
   content: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: Spacing.four,
     gap: Spacing.four,
   },
   mascotEmoji: {
     fontSize: 100,
-    textAlign: 'center',
+    textAlign: "center",
   },
   mascotImage: {
     width: 160,
@@ -303,98 +445,150 @@ const styles = StyleSheet.create({
   },
   messageText: {
     fontSize: 22,
-    fontWeight: '700',
-    textAlign: 'center',
+    fontWeight: "700",
+    textAlign: "center",
     lineHeight: 30,
   },
   buttons: {
-    alignSelf: 'stretch',
+    alignSelf: "stretch",
     gap: Spacing.two,
     marginTop: Spacing.three,
   },
   primaryButton: {
-    backgroundColor: 'rgba(0,0,0,0.25)',
+    backgroundColor: "rgba(0,0,0,0.25)",
     paddingVertical: Spacing.three,
     paddingHorizontal: Spacing.four,
     borderRadius: Spacing.two,
-    alignItems: 'center',
+    alignItems: "center",
   },
   primaryButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 17,
-    fontWeight: '700',
+    fontWeight: "700",
+  },
+  laterButton: {
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.16)",
+    borderColor: "rgba(255,255,255,0.45)",
+    borderRadius: Spacing.two,
+    borderWidth: 1,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.three,
+  },
+  laterButtonTitle: {
+    color: "#FFFFFF",
+    fontSize: 17,
+    fontWeight: "800",
+  },
+  laterButtonHint: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    marginTop: 3,
+    opacity: 0.8,
   },
   buttonDisabled: {
     opacity: 0.4,
   },
   statusContent: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     gap: Spacing.three,
     paddingHorizontal: Spacing.four,
   },
   statusEmoji: {
     fontSize: 72,
-    textAlign: 'center',
+    textAlign: "center",
   },
   statusTitle: {
     fontSize: 26,
-    fontWeight: '800',
+    fontWeight: "800",
     lineHeight: 34,
-    textAlign: 'center',
+    textAlign: "center",
   },
   statusBody: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
     lineHeight: 24,
     opacity: 0.9,
-    textAlign: 'center',
+    textAlign: "center",
   },
   statusButtons: {
-    alignSelf: 'stretch',
+    alignSelf: "stretch",
     gap: Spacing.two,
     marginTop: Spacing.three,
+  },
+  laterOptions: {
+    alignSelf: "stretch",
+    gap: Spacing.two,
+    marginTop: Spacing.three,
+  },
+  laterOption: {
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.14)",
+    borderColor: "rgba(255,255,255,0.36)",
+    borderRadius: 18,
+    borderWidth: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.three,
+  },
+  laterOptionTitle: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  laterOptionBody: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    marginTop: 4,
+    opacity: 0.75,
+  },
+  laterOptionTime: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "900",
   },
   manualButton: {
     paddingVertical: Spacing.three,
     paddingHorizontal: Spacing.four,
-    alignItems: 'center',
+    alignItems: "center",
   },
   manualButtonText: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   successContent: {
-    backgroundColor: '#22A06B',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#22A06B",
+    alignItems: "center",
+    justifyContent: "center",
     gap: Spacing.three,
     paddingHorizontal: Spacing.four,
   },
   successEmoji: {
     fontSize: 100,
-    textAlign: 'center',
+    textAlign: "center",
   },
   successTitle: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 28,
-    fontWeight: '800',
+    fontWeight: "800",
     lineHeight: 36,
-    textAlign: 'center',
+    textAlign: "center",
   },
   ignoreButton: {
     paddingVertical: Spacing.three,
-    alignItems: 'center',
+    alignItems: "center",
   },
   ignoreButtonDimmed: {
     opacity: 0.35,
   },
   ignoreButtonText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   ignoreButtonTextDimmed: {
-    textDecorationLine: 'line-through',
+    textDecorationLine: "line-through",
   },
 });

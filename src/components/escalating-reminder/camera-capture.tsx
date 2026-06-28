@@ -19,9 +19,9 @@ export function CameraCapture({ onCapture, onCancel }: CameraCaptureProps) {
   if (Platform.OS === 'web') {
     return (
       <View style={[StyleSheet.absoluteFill, styles.center]}>
-        <Text style={styles.webMessage}>Camera is not available on web.</Text>
+        <Text style={styles.webMessage}>Camera chưa hỗ trợ trên phiên bản web.</Text>
         <Pressable onPress={onCancel} style={styles.cancelButton}>
-          <Text style={styles.cancelText}>Cancel</Text>
+          <Text style={styles.cancelText}>Hủy</Text>
         </Pressable>
       </View>
     );
@@ -34,15 +34,15 @@ export function CameraCapture({ onCapture, onCancel }: CameraCaptureProps) {
   if (!permission.granted) {
     return (
       <View style={[StyleSheet.absoluteFill, styles.center, styles.permissionBg]}>
-        <Text style={styles.permissionTitle}>Camera access needed</Text>
+        <Text style={styles.permissionTitle}>Cần quyền truy cập camera</Text>
         <Text style={styles.permissionBody}>
-          To confirm you took your medication, we need camera access to capture a photo.
+          Mèo cần camera để chụp ảnh và xác nhận bạn đã uống thuốc.
         </Text>
         <Pressable onPress={requestPermission} style={styles.grantButton}>
-          <Text style={styles.grantText}>Allow Camera</Text>
+          <Text style={styles.grantText}>Cho phép camera</Text>
         </Pressable>
         <Pressable onPress={onCancel} style={styles.cancelButton}>
-          <Text style={styles.cancelText}>Cancel</Text>
+          <Text style={styles.cancelText}>Hủy</Text>
         </Pressable>
       </View>
     );
@@ -71,7 +71,7 @@ export function CameraCapture({ onCapture, onCancel }: CameraCaptureProps) {
           <View style={styles.shutterInner} />
         </Pressable>
         <Pressable onPress={onCancel} style={styles.cancelOverlay}>
-          <Text style={styles.cancelOverlayText}>Cancel</Text>
+          <Text style={styles.cancelOverlayText}>Hủy</Text>
         </Pressable>
       </View>
     </View>

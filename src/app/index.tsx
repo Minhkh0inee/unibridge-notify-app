@@ -6,8 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
-  View,
+  View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -63,6 +62,10 @@ export default function HomeScreen() {
   const progressValue = progress.total ? progress.done / progress.total : 0;
   const testMedication = nextDose?.medication ?? journey?.medications[0];
   const testScheduledTime = nextDose?.time ?? testMedication?.reminderTimes[0];
+  const testDoseMedications =
+    journey?.medications.filter((medication) =>
+      medication.reminderTimes.includes(testScheduledTime ?? ""),
+    ) ?? [];
 
   useEffect(() => subscribeToReminderIntents(setReminderIntent), []);
 
@@ -122,7 +125,7 @@ export default function HomeScreen() {
     setTestStatus(null);
     try {
       const result = await scheduleTestNotificationAsync(
-        testMedication,
+        testDoseMedications.length > 0 ? testDoseMedications : testMedication,
         testScheduledTime,
       );
       const message = `Notification thuốc sẽ xuất hiện lúc ${result.scheduledFor.toLocaleTimeString()}.`;
@@ -195,83 +198,153 @@ export default function HomeScreen() {
             paddingTop: Math.max(insets.top, 16) + 16,
             paddingBottom: insets.bottom + BottomTabInset + 130,
           },
-        ]}>
-      <View style={styles.header}>
-        <View style={styles.headerCopy}>
-          <Text style={[styles.greeting, { color: theme.textSecondary }]}>Morning Ngọc 🌤️</Text>
-          <Text style={[styles.title, { color: theme.text }]}>
-            Hôm nay có{'\n'}
-            {loading ? '...' : progress.total} liều nha
-          </Text>
-        </View>
-        <Pressable
-          accessibilityLabel="Thông báo"
-          style={[styles.bellButton, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
-          <AppIcon name="bell" color={theme.text} size={18} />
-          <View style={[styles.notificationDot, { backgroundColor: theme.primary, borderColor: theme.backgroundElement }]} />
-        </Pressable>
-      </View>
-
-      <View
-        style={[
-          styles.progressCard,
-          { backgroundColor: theme.backgroundElement, borderColor: theme.border, shadowColor: theme.cardShadow },
-        ]}>
-        <View style={[styles.mascotTile, { backgroundColor: theme.primarySoft }]}>
-          <Mascot mood="happy" size={90} />
-        </View>
-        <View style={styles.progressText}>
-          <Text style={[styles.kicker, { color: theme.textSecondary }]}>Hoàn thành hôm nay</Text>
-          <Text style={[styles.cardTitle, { color: theme.text }]}>
-            {progress.done}/{progress.total || 0} liều
-          </Text>
-          <Text style={[styles.bodyText, { color: theme.textSecondary }]}>
-            {progress.total - progress.done > 0
-              ? `Cố lên, còn ${progress.total - progress.done} liều nữa là xong ngày!`
-              : 'Xong nhiệm vụ hôm nay rồi! 🎉'}
-          </Text>
-        </View>
-        <ProgressRing value={progressValue} />
-      </View>
-
-      {nextDose && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>Tiếp theo</Text>
-            <Text style={[styles.sectionMeta, { color: theme.textSecondary }]}>{nextDose.time}</Text>
+        ]}
+      >
+        <View style={styles.header}>
+          <View style={styles.headerCopy}>
+            <Text style={[styles.greeting, { color: theme.textSecondary }]}>
+              Morning Ngọc 🌤️
+            </Text>
+            <Text style={[styles.title, { color: theme.text }]}>
+              Hôm nay có{"\n"}
+              {loading ? "..." : progress.total} liều nha
+            </Text>
           </View>
-          <View style={[styles.nextCard, { backgroundColor: theme.primary, shadowColor: theme.primary }]}>
-            <View style={styles.nextGlowLarge} />
-            <View style={styles.nextGlowSmall} />
-            <View style={styles.nextTop}>
-              <View style={styles.nextCopy}>
-                <Text style={[styles.nextKicker, { color: theme.primaryForeground }]}>
-                  Lúc {nextDose.time} · {nextDose.period}
-                </Text>
-                <Text style={[styles.nextTitle, { color: theme.primaryForeground }]} numberOfLines={1}>
-                  {nextDose.medication.name}
-                </Text>
-                <Text style={[styles.nextMeta, { color: theme.primaryForeground }]}>
-                  {nextDose.medication.dosage} · Lịch {journey?.name ?? 'uống hiện tại'}
-                </Text>
+          <Pressable
+            accessibilityLabel="Thông báo"
+            style={[
+              styles.bellButton,
+              {
+                backgroundColor: theme.backgroundElement,
+                borderColor: theme.border,
+              },
+            ]}
+          >
+            <AppIcon name="bell" color={theme.text} size={18} />
+            <View
+              style={[
+                styles.notificationDot,
+                {
+                  backgroundColor: theme.primary,
+                  borderColor: theme.backgroundElement,
+                },
+              ]}
+            />
+          </Pressable>
+        </View>
+
+        <View
+          style={[
+            styles.progressCard,
+            {
+              backgroundColor: theme.backgroundElement,
+              borderColor: theme.border,
+              shadowColor: theme.cardShadow,
+            },
+          ]}
+        >
+          <View
+            style={[styles.mascotTile, { backgroundColor: theme.primarySoft }]}
+          >
+            <Mascot mood="happy" size={90} />
+          </View>
+          <View style={styles.progressText}>
+            <Text style={[styles.kicker, { color: theme.textSecondary }]}>
+              Hoàn thành hôm nay
+            </Text>
+            <Text style={[styles.cardTitle, { color: theme.text }]}>
+              {progress.done}/{progress.total || 0} liều
+            </Text>
+            <Text style={[styles.bodyText, { color: theme.textSecondary }]}>
+              {progress.total - progress.done > 0
+                ? `Cố lên, còn ${progress.total - progress.done} liều nữa là xong ngày!`
+                : "Xong nhiệm vụ hôm nay rồi! 🎉"}
+            </Text>
+          </View>
+          <ProgressRing value={progressValue} />
+        </View>
+
+        {nextDose && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text
+                style={[styles.sectionLabel, { color: theme.textSecondary }]}
+              >
+                Tiếp theo
+              </Text>
+              <Text
+                style={[styles.sectionMeta, { color: theme.textSecondary }]}
+              >
+                {nextDose.time}
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.nextCard,
+                { backgroundColor: theme.primary, shadowColor: theme.primary },
+              ]}
+            >
+              <View style={styles.nextGlowLarge} />
+              <View style={styles.nextGlowSmall} />
+              <View style={styles.nextTop}>
+                <View style={styles.nextCopy}>
+                  <Text
+                    style={[
+                      styles.nextKicker,
+                      { color: theme.primaryForeground },
+                    ]}
+                  >
+                    Lúc {nextDose.time} · {nextDose.period}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.nextTitle,
+                      { color: theme.primaryForeground },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {nextDose.medication.name}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.nextMeta,
+                      { color: theme.primaryForeground },
+                    ]}
+                  >
+                    {nextDose.medication.dosage} · Lịch{" "}
+                    {journey?.name ?? "uống hiện tại"}
+                  </Text>
+                </View>
+                <View style={styles.upcomingBadge}>
+                  <Text style={styles.upcomingText}>Sắp tới</Text>
+                </View>
               </View>
-              <View style={styles.upcomingBadge}>
-                <Text style={styles.upcomingText}>Sắp tới</Text>
+              <View style={styles.nextActions}>
+                <Pressable
+                  onPress={() =>
+                    openReminder(nextDose.medication, nextDose.time)
+                  }
+                  style={({ pressed }) => [
+                    styles.confirmButton,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text style={[styles.confirmText, { color: theme.primary }]}>
+                    Đã uống
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.detailButton,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text style={styles.detailText}>Chi tiết</Text>
+                </Pressable>
               </View>
             </View>
-            <View style={styles.nextActions}>
-              <Pressable
-                onPress={() => openReminder(nextDose.medication, nextDose.time)}
-                style={({ pressed }) => [styles.confirmButton, pressed && styles.pressed]}>
-                <Text style={[styles.confirmText, { color: theme.primary }]}>Đã uống</Text>
-              </Pressable>
-              <Pressable style={({ pressed }) => [styles.detailButton, pressed && styles.pressed]}>
-                <Text style={styles.detailText}>Chi tiết</Text>
-              </Pressable>
-            </View>
           </View>
-        </View>
-      )}
+        )}
 
         <View style={styles.quickGrid}>
           <QuickAction
@@ -292,73 +365,63 @@ export default function HomeScreen() {
           <QuickAction icon="bag" label="Nhắc mang" />
         </View>
 
-      <View
-        style={[
-          styles.testPanel,
-          {
-            backgroundColor: theme.backgroundElement,
-            borderColor: theme.border,
-          },
-        ]}>
-        <View style={styles.testPanelHeader}>
-          <View style={[styles.testBadge, { backgroundColor: theme.primarySoft }]}>
-            <Text style={[styles.testBadgeText, { color: theme.primary }]}>TEST LAB</Text>
-          </View>
-          <View style={styles.testPanelCopy}>
-            <Text style={[styles.testPanelTitle, { color: theme.text }]}>
-              Test thử nhắc nhở
-            </Text>
-            <Text style={[styles.testPanelSubtitle, { color: theme.textSecondary }]}>
-              Thông báo sẽ nổ sau 10 giây.
-            </Text>
-          </View>
-        </View>
-
-        <Pressable
-          accessibilityRole="button"
-          onPress={openTestReminder}
-          style={({ pressed }) => [
-            styles.testPrimaryButton,
+        <View
+          style={[
+            styles.testPanel,
             {
-              backgroundColor: theme.text,
-              transform: [{ scale: pressed ? 0.985 : 1 }],
+              backgroundColor: theme.backgroundElement,
+              borderColor: theme.border,
             },
-          ]}>
-          <AppIcon name="bell" color={theme.background} size={16} />
-          <Text style={[styles.testPrimaryText, { color: theme.background }]}>
-            Mở thử lời nhắc
-          </Text>
-        </Pressable>
-
-          <View style={styles.carryTimeRow}>
-            <Text
-              style={[styles.carryTimeLabel, { color: theme.textSecondary }]}
+          ]}
+        >
+          <View style={styles.testPanelHeader}>
+            <View
+              style={[styles.testBadge, { backgroundColor: theme.primarySoft }]}
             >
-              Giờ nhắc mang
-            </Text>
-            <TextInput
-              value={carryReminderTime}
-              onChangeText={setCarryReminderTime}
-              placeholder="07:00"
-              placeholderTextColor={theme.textSecondary}
-              keyboardType="numeric"
-              style={[
-                styles.carryTimeInput,
-                {
-                  backgroundColor: theme.backgroundElement,
-                  borderColor: theme.border,
-                  color: theme.text,
-                },
-              ]}
-            />
+              <Text style={[styles.testBadgeText, { color: theme.primary }]}>
+                TEST LAB
+              </Text>
+            </View>
+            <View style={styles.testPanelCopy}>
+              <Text style={[styles.testPanelTitle, { color: theme.text }]}>
+                Test thử nhắc nhở
+              </Text>
+              <Text
+                style={[
+                  styles.testPanelSubtitle,
+                  { color: theme.textSecondary },
+                ]}
+              >
+                Thông báo sẽ nổ sau 10 giây.
+              </Text>
+            </View>
           </View>
+
+          <Pressable
+            accessibilityRole="button"
+            onPress={openTestReminder}
+            style={({ pressed }) => [
+              styles.testPrimaryButton,
+              {
+                backgroundColor: theme.text,
+                transform: [{ scale: pressed ? 0.985 : 1 }],
+              },
+            ]}
+          >
+            <AppIcon name="bell" color={theme.background} size={16} />
+            <Text style={[styles.testPrimaryText, { color: theme.background }]}>
+              Mở thử lời nhắc
+            </Text>
+          </Pressable>
 
           <View style={styles.testNotificationRow}>
             <TestButton
               icon="pill"
               label="Test uống thuốc"
               loading={testAction === "medication-notification"}
-              disabled={Boolean(testAction) || !testMedication || !testScheduledTime}
+              disabled={
+                Boolean(testAction) || !testMedication || !testScheduledTime
+              }
               onPress={testMedicationNotification}
             />
             <TestButton
