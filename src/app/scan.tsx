@@ -155,6 +155,7 @@ const styles = StyleSheet.create({
     marginTop: 18,
     overflow: 'hidden',
     position: 'relative',
+    width: '100%',
   },
   scanFrameText: {
     color: 'rgba(255,255,255,0.62)',

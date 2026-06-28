@@ -128,8 +128,8 @@ function notificationContent(
   return {
     title:
       medications.length === 1
-        ? `💊 Đến giờ uống ${primaryMedication.name}`
-        : `💊 Đến giờ uống ${medications.length} loại thuốc`,
+        ? `Đến giờ uống ${primaryMedication.name}`
+        : `Đến giờ uống ${medications.length} loại thuốc`,
     subtitle: `${scheduledTime} · Liều thuốc của bạn`,
     body: `${doseSummary}${remainingCount > 0 ? ` • +${remainingCount} thuốc khác` : ''}`,
     data,
