@@ -17,7 +17,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Spacing } from "@/constants/theme";
+import { MobileFrameWidth, Spacing } from "@/constants/theme";
 import { logDose } from "@/data/storage";
 import type { EscalationConfig, Medication } from "@/data/types";
 import { scheduleMedicationReminderAfterAsync } from "@/notifications/notifications";
@@ -25,10 +25,7 @@ import { verifyMedicationPhoto } from "@/services/medication-verification";
 
 import { CameraCapture } from "./camera-capture";
 import type { EscalationLevel } from "./escalation-levels";
-import {
-  LEVEL_CONFIGS,
-  TEST_ADVANCE_LEVEL_ON_IGNORE,
-} from "./escalation-levels";
+import { LEVEL_CONFIGS } from "./escalation-levels";
 import { useEscalation } from "./use-escalation";
 
 export interface EscalatingReminderProps {
@@ -63,7 +60,7 @@ export function EscalatingReminder({
   escalationConfig,
   onDismiss,
 }: EscalatingReminderProps) {
-  const { level, advanceLevel, cleanup } = useEscalation(
+  const { level, cleanup } = useEscalation(
     escalationConfig,
     visible,
   );
@@ -98,32 +95,6 @@ export function EscalatingReminder({
   }, [visible]);
 
   const config = LEVEL_CONFIGS[level];
-  const ignoreDisabled =
-    (!TEST_ADVANCE_LEVEL_ON_IGNORE && escalationConfig.requirePhotoToStop) ||
-    isLogging ||
-    isVerifying;
-
-  async function handleIgnore() {
-    if (ignoreDisabled) return;
-    if (TEST_ADVANCE_LEVEL_ON_IGNORE && level < 4) {
-      advanceLevel();
-      return;
-    }
-
-    setIsLogging(true);
-    try {
-      await logDose({
-        medicationId: medication.id,
-        scheduledTime,
-        actionTakenAt: new Date().toISOString(),
-        status: "ignored",
-      });
-      cleanup();
-      onDismiss();
-    } catch {
-      setIsLogging(false);
-    }
-  }
 
   async function handlePhotoConfirm(photoUri: string) {
     if (isLogging || isVerifying) return;
@@ -232,16 +203,17 @@ export function EscalatingReminder({
       transparent
     >
       <Animated.View style={[StyleSheet.absoluteFill, animatedBg]}>
-        {viewMode === "reminder" && (
-          <View
-            style={[
-              styles.content,
-              {
-                paddingTop: insets.top + Spacing.six,
-                paddingBottom: insets.bottom + Spacing.four,
-              },
-            ]}
-          >
+        <View style={styles.container}>
+          {viewMode === "reminder" && (
+            <View
+              style={[
+                styles.content,
+                {
+                  paddingTop: insets.top + Spacing.six,
+                  paddingBottom: insets.bottom + Spacing.four,
+                },
+              ]}
+            >
             <MascotDisplay level={level} />
 
             <Text style={[styles.messageText, { color: config.textColor }]}>
@@ -277,26 +249,6 @@ export function EscalatingReminder({
                   </Text>
                 </Pressable>
               )}
-
-              <Pressable
-                onPress={handleIgnore}
-                disabled={ignoreDisabled}
-                accessibilityState={{ disabled: ignoreDisabled }}
-                style={[
-                  styles.ignoreButton,
-                  ignoreDisabled && styles.ignoreButtonDimmed,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.ignoreButtonText,
-                    { color: config.textColor },
-                    ignoreDisabled && styles.ignoreButtonTextDimmed,
-                  ]}
-                >
-                  Bỏ qua
-                </Text>
-              </Pressable>
             </View>
           </View>
         )}
@@ -434,12 +386,19 @@ export function EscalatingReminder({
             </Text>
           </View>
         )}
+        </View>
       </Animated.View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignSelf: "center",
+    maxWidth: MobileFrameWidth,
+    width: "100%",
+  },
   content: {
     flex: 1,
     alignItems: "center",
