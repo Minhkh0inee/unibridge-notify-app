@@ -64,3 +64,20 @@ export function getTodayProgress(doses: ScheduledDose[]) {
 export function getNextDose(doses: ScheduledDose[]) {
   return doses.find((dose) => dose.status === 'upcoming' || dose.status === 'pending');
 }
+
+export function getCurrentPeriodDose(doses: ScheduledDose[]) {
+  const now = new Date();
+  const currentHour = now.getHours();
+
+  // Determine current period
+  let currentPeriod: Period;
+  if (currentHour < 11) currentPeriod = 'Sáng';
+  else if (currentHour < 14) currentPeriod = 'Trưa';
+  else if (currentHour < 18) currentPeriod = 'Chiều';
+  else currentPeriod = 'Tối';
+
+  // Find the earliest untaken dose in the current period
+  return doses.find(
+    (dose) => dose.period === currentPeriod && (dose.status === 'upcoming' || dose.status === 'pending')
+  ) ?? null;
+}

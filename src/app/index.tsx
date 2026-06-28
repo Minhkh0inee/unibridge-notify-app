@@ -18,7 +18,7 @@ import { MedicationCard } from "@/components/medication-card";
 import { ProgressRing } from "@/components/progress-ring";
 import { BottomTabInset, Fonts, MobileFrameWidth } from "@/constants/theme";
 import {
-  getNextDose,
+  getCurrentPeriodDose,
   getScheduledDoses,
   getTodayProgress,
 } from "@/data/schedule";
@@ -64,10 +64,10 @@ export default function HomeScreen() {
   const [carryReminderTime, setCarryReminderTime] = useState("07:00");
   const doses = getScheduledDoses(journey, logs);
   const progress = getTodayProgress(doses);
-  const nextDose = getNextDose(doses);
+  const currentPeriodDose = getCurrentPeriodDose(doses);
   const progressValue = progress.total ? progress.done / progress.total : 0;
-  const testMedication = nextDose?.medication ?? journey?.medications[0];
-  const testScheduledTime = nextDose?.time ?? testMedication?.reminderTimes[0];
+  const testMedication = currentPeriodDose?.medication ?? journey?.medications[0];
+  const testScheduledTime = currentPeriodDose?.time ?? testMedication?.reminderTimes[0];
 
   useEffect(() => subscribeToReminderIntents(setReminderIntent), []);
 
@@ -254,12 +254,6 @@ export default function HomeScreen() {
             {loading ? '...' : progress.total} liều nha
           </Text>
         </View>
-        <Pressable
-          accessibilityLabel="Thông báo"
-          style={[styles.bellButton, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
-          <AppIcon name="bell" color={theme.text} size={18} />
-          <View style={[styles.notificationDot, { backgroundColor: theme.primary, borderColor: theme.backgroundElement }]} />
-        </Pressable>
       </View>
 
       <View
@@ -284,11 +278,11 @@ export default function HomeScreen() {
         <ProgressRing value={progressValue} />
       </View>
 
-      {nextDose && (
+      {currentPeriodDose && (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>Tiếp theo</Text>
-            <Text style={[styles.sectionMeta, { color: theme.textSecondary }]}>{nextDose.time}</Text>
+            <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>Buổi này</Text>
+            <Text style={[styles.sectionMeta, { color: theme.textSecondary }]}>{currentPeriodDose.time}</Text>
           </View>
           <View style={[styles.nextCard, { backgroundColor: theme.primary, shadowColor: theme.primary }]}>
             <View style={styles.nextGlowLarge} />
@@ -296,13 +290,13 @@ export default function HomeScreen() {
             <View style={styles.nextTop}>
               <View style={styles.nextCopy}>
                 <Text style={[styles.nextKicker, { color: theme.primaryForeground }]}>
-                  Lúc {nextDose.time} · {nextDose.period}
+                  Lúc {currentPeriodDose.time} · {currentPeriodDose.period}
                 </Text>
                 <Text style={[styles.nextTitle, { color: theme.primaryForeground }]} numberOfLines={1}>
-                  {nextDose.medication.name}
+                  {currentPeriodDose.medication.name}
                 </Text>
                 <Text style={[styles.nextMeta, { color: theme.primaryForeground }]}>
-                  {nextDose.medication.dosage} · Lịch {journey?.name ?? 'uống hiện tại'}
+                  {currentPeriodDose.medication.dosage} · Lịch {journey?.name ?? 'uống hiện tại'}
                 </Text>
               </View>
               <View style={styles.upcomingBadge}>
@@ -311,7 +305,7 @@ export default function HomeScreen() {
             </View>
             <View style={styles.nextActions}>
               <Pressable
-                onPress={() => void markDoseTaken(nextDose.medication, nextDose.time)}
+                onPress={() => void markDoseTaken(currentPeriodDose.medication, currentPeriodDose.time)}
                 style={({ pressed }) => [styles.confirmButton, pressed && styles.pressed]}>
                 <Text style={[styles.confirmText, { color: theme.primary }]}>Đã uống</Text>
               </Pressable>
@@ -323,14 +317,26 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {!nextDose && progress.total > 0 && progress.done === progress.total && (
+      {!currentPeriodDose && progress.total > 0 && (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>Hoàn thành</Text>
+            <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>Buổi này</Text>
           </View>
-          <View style={[styles.completionCard, { backgroundColor: theme.primarySoft, borderColor: theme.primary }]}> 
-            <Text style={[styles.completionTitle, { color: theme.primary }]}>Chúc mừng! 🎉</Text>
-            <Text style={[styles.completionText, { color: theme.textSecondary }]}>Bạn đã hoàn thành chỉ tiêu uống thuốc hôm nay.</Text>
+          <View style={[styles.nextCard, { backgroundColor: theme.success, shadowColor: theme.success }]}>
+            <View style={styles.nextGlowLarge} />
+            <View style={styles.nextGlowSmall} />
+            <View style={styles.nextTop}>
+              <View style={styles.nextCopy}>
+                <View style={[styles.skeletonLine, { width: '40%', height: 10 }]} />
+                <View style={[styles.skeletonLine, { width: '70%', height: 22, marginTop: 8 }]} />
+                <View style={[styles.skeletonLine, { width: '85%', height: 14, marginTop: 6 }]} />
+              </View>
+              <View style={[styles.skeletonBadge, { width: 60, height: 28 }]} />
+            </View>
+            <View style={styles.nextActions}>
+              <View style={[styles.skeletonButton, { flex: 1, height: 42 }]} />
+              <View style={[styles.skeletonButton, { width: 80, height: 42 }]} />
+            </View>
           </View>
         </View>
       )}
@@ -566,24 +572,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     lineHeight: 31,
     marginTop: 5,
-  },
-  bellButton: {
-    alignItems: "center",
-    borderRadius: 16,
-    borderWidth: 1,
-    height: 40,
-    justifyContent: "center",
-    position: "relative",
-    width: 40,
-  },
-  notificationDot: {
-    borderRadius: 5,
-    borderWidth: 2,
-    height: 10,
-    position: "absolute",
-    right: 8,
-    top: 8,
-    width: 10,
   },
   progressCard: {
     alignItems: "center",
@@ -888,4 +876,16 @@ const styles = StyleSheet.create({
   },
   cardList: { gap: 12 },
   pressed: { opacity: 0.78 },
+  skeletonLine: {
+    backgroundColor: "rgba(255,255,255,0.25)",
+    borderRadius: 8,
+  },
+  skeletonBadge: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 999,
+  },
+  skeletonButton: {
+    backgroundColor: "rgba(255,255,255,0.3)",
+    borderRadius: 16,
+  },
 });
