@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppIcon, type AppIconName } from '@/components/app-icon';
@@ -42,6 +42,7 @@ export default function HomeScreen() {
   const [showReminder, setShowReminder] = useState(false);
   const [testAction, setTestAction] = useState<TestAction>(null);
   const [testStatus, setTestStatus] = useState<string | null>(null);
+  const [carryReminderTime, setCarryReminderTime] = useState('07:00');
   const doses = getScheduledDoses(journey, logs);
   const progress = getTodayProgress(doses);
   const nextDose = getNextDose(doses);
@@ -84,6 +85,10 @@ export default function HomeScreen() {
     void refresh().catch(console.error);
   }
 
+  function isValidTimeValue(value: string): boolean {
+    return /^([01]\d|2[0-3]):([0-5]\d)$/.test(value);
+  }
+
   function openTestReminder() {
     if (!testMedication || !testScheduledTime) {
       Alert.alert('Chưa có thuốc', 'Thêm ít nhất một thuốc để test reminder modal.');
@@ -123,19 +128,28 @@ export default function HomeScreen() {
   async function testCarryNotification() {
     if (testAction) return;
 
+    if (!isValidTimeValue(carryReminderTime)) {
+      Alert.alert(
+        'Giờ không hợp lệ',
+        'Vui lòng nhập thời gian theo định dạng HH:MM, ví dụ 07:00.'
+      );
+      return;
+    }
+
     setTestAction('carry-notification');
     setTestStatus(null);
     try {
-      const scheduledFor = await scheduleTestCarryNotificationAsync();
-      const message = `Notification nhắc mang thuốc sẽ xuất hiện lúc ${scheduledFor.toLocaleTimeString()}.`;
+      const scheduledFor = await scheduleTestCarryNotificationAsync(carryReminderTime);
+      const formattedTime = scheduledFor.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      const message = `Nhắc mang thuốc sẽ xuất hiện lúc ${formattedTime}.`;
       setTestStatus(message);
-      Alert.alert(
-        'Đã đặt notification',
-        `${message} Hãy đưa app xuống nền để kiểm tra.`
-      );
+      Alert.alert('Đã đặt nhắc mang', `${message} Hãy đưa app xuống nền để kiểm tra.`);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Không thể đặt notification.';
+        error instanceof Error ? error.message : 'Không thể đặt nhắc mang.';
       setTestStatus(message);
       Alert.alert('Test thất bại', message);
     } finally {
@@ -285,22 +299,25 @@ export default function HomeScreen() {
           </Text>
         </Pressable>
 
-        <View style={styles.testNotificationRow}>
-          <TestButton
-            icon="pill"
-            label="Notification thuốc"
-            loading={testAction === 'medication-notification'}
-            disabled={testAction !== null}
-            onPress={testMedicationNotification}
-          />
-          <TestButton
-            icon="bag"
-            label="Nhắc mang thuốc"
-            loading={testAction === 'carry-notification'}
-            disabled={testAction !== null}
-            onPress={testCarryNotification}
+        <View style={styles.carryTimeRow}>
+          <Text style={[styles.carryTimeLabel, { color: theme.textSecondary }]}>Giờ nhắc mang</Text>
+          <TextInput
+            value={carryReminderTime}
+            onChangeText={setCarryReminderTime}
+            placeholder="07:00"
+            placeholderTextColor={theme.textSecondary}
+            keyboardType="numeric"
+            style={[
+              styles.carryTimeInput,
+              {
+                backgroundColor: theme.backgroundElement,
+                borderColor: theme.border,
+                color: theme.text,
+              },
+            ]}
           />
         </View>
+
 
         {testStatus && (
           <Text style={[styles.testStatus, { color: theme.textSecondary }]}>
@@ -695,6 +712,22 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '800',
     textAlign: 'center',
+  },
+  carryTimeRow: {
+    gap: 8,
+    marginTop: 14,
+  },
+  carryTimeLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  carryTimeInput: {
+    borderRadius: 16,
+    borderWidth: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    minHeight: 46,
+    paddingHorizontal: 14,
   },
   testStatus: {
     fontSize: 11,
