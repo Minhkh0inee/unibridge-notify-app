@@ -17,6 +17,37 @@ export default function InsightsScreen() {
   const progress = getTodayProgress(doses);
   const rate = progress.total ? Math.round((progress.done / progress.total) * 100) : 0;
 
+  // Determine hero content based on completion rate
+  const getHeroContent = () => {
+    if (rate >= 90) {
+      return {
+        mood: 'proud' as const,
+        kicker: 'Tuyệt vời',
+        text: 'Đang vào guồng rồi. Cứ thế phát huy nha!',
+      };
+    } else if (rate >= 70) {
+      return {
+        mood: 'happy' as const,
+        kicker: 'Khá tốt',
+        text: 'Cố gắng thêm chút nữa là đạt mục tiêu rồi!',
+      };
+    } else if (rate >= 50) {
+      return {
+        mood: 'waiting' as const,
+        kicker: 'Cần cố gắng',
+        text: 'Hãy cố gắng uống đều hơn để đạt hiệu quả nhé.',
+      };
+    } else {
+      return {
+        mood: 'impatient' as const,
+        kicker: 'Cần chú ý',
+        text: 'Việc uống thuốc đều đặn rất quan trọng đấy!',
+      };
+    }
+  };
+
+  const heroContent = getHeroContent();
+
   return (
     <ScrollView
       style={[styles.screen, { backgroundColor: theme.background }]}
@@ -28,11 +59,11 @@ export default function InsightsScreen() {
       <Text style={[styles.title, { color: theme.text }]}>Tổng kết tuần</Text>
 
       <View style={[styles.hero, { backgroundColor: theme.primary, shadowColor: theme.primary }]}>
-        <Mascot mood="proud" size={92} />
+        <Mascot mood={heroContent.mood} size={92} />
         <View style={styles.heroCopy}>
-          <Text style={styles.heroKicker}>Tuyệt vời</Text>
+          <Text style={styles.heroKicker}>{heroContent.kicker}</Text>
           <Text style={styles.heroTitle}>{progress.done}/{progress.total || 0} lần</Text>
-          <Text style={styles.heroText}>Đang vào guồng rồi. Cứ thế phát huy nha!</Text>
+          <Text style={styles.heroText}>{heroContent.text}</Text>
         </View>
       </View>
 
