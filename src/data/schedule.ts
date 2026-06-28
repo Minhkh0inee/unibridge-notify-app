@@ -62,5 +62,5 @@ export function getTodayProgress(doses: ScheduledDose[]) {
 }
 
 export function getNextDose(doses: ScheduledDose[]) {
-  return doses.find((dose) => dose.status === 'upcoming' || dose.status === 'pending') ?? doses[0];
+  return doses.find((dose) => dose.status === 'upcoming' || dose.status === 'pending');
 }

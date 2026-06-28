@@ -8,6 +8,7 @@ import type {
   DoseEvent,
   NotificationSchedule,
   DoseEventStatus,
+  Profile,
 } from './types';
 
 function toDateKey(date: Date): string {
@@ -163,7 +164,7 @@ export async function ensureDemoJourneyForCurrentUser(userId: string): Promise<b
 
   const { error: profileError } = await supabase
     .from('profiles')
-    .upsert({ id: userId, display_name: 'Guest' });
+    .upsert({ id: userId, display_name: getRandomVietnameseDisplayName() });
 
   if (profileError) {
     console.error('Failed to create demo profile:', profileError);
@@ -407,6 +408,18 @@ export async function ensureDemoJourneyForCurrentUser(userId: string): Promise<b
   }
 
   return true;
+}
+
+function getRandomVietnameseDisplayName(): string {
+  const familyNames = ['Nguyễn', 'Trần', 'Lê', 'Phạm', 'Hoàng', 'Phan', 'Vũ', 'Đỗ', 'Hồ', 'Đặng'];
+  const middleNames = ['Văn', 'Thị', 'Hoàng', 'Ngọc', 'Phương', 'Tuấn', 'Minh', 'Thu', 'Quỳnh', 'Bảo'];
+  const givenNames = ['An', 'Bình', 'Cường', 'Dũng', 'Giang', 'Hà', 'Hiếu', 'Hương', 'Khánh', 'Lan', 'Linh', 'Minh', 'Ngọc', 'Phúc', 'Quỳnh', 'Thảo', 'Tiến', 'Trang', 'Tú', 'Vân'];
+
+  const familyName = familyNames[Math.floor(Math.random() * familyNames.length)];
+  const middleName = middleNames[Math.floor(Math.random() * middleNames.length)];
+  const givenName = givenNames[Math.floor(Math.random() * givenNames.length)];
+
+  return `${familyName} ${middleName} ${givenName}`;
 }
 
 export async function getJourneyById(id: string): Promise<JourneyEntity | null> {
@@ -775,4 +788,19 @@ export async function getCurrentUserId(): Promise<string | null> {
     data: { session },
   } = await supabase.auth.getSession();
   return session?.user?.id ?? null;
+}
+
+export async function getProfile(userId: string): Promise<Profile | null> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error) {
+    console.error('Failed to fetch profile:', error);
+    return null;
+  }
+
+  return data ?? null;
 }

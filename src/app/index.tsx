@@ -25,6 +25,10 @@ import {
 import type { Medication } from "@/data/types";
 import { useActiveJourney } from "@/hooks/use-active-journey";
 import { useTheme } from "@/hooks/use-theme";
+import { getGreetingText } from "@/utils/date";
+import { ensureAnonymousSession } from "@/lib/auth";
+import { getProfile } from "@/data/supabase-storage";
+import { logDose } from "@/data/storage";
 import {
   scheduleTestCarryNotificationAsync,
   scheduleTestNotificationAsync,
@@ -47,6 +51,7 @@ export default function HomeScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { journey, logs, loading, refresh } = useActiveJourney();
+  const [displayName, setDisplayName] = useState('Ngọc');
   const [reminderIntent, setReminderIntent] = useState<ReminderIntent | null>(
     () => getPendingReminderIntent(),
   );
@@ -65,6 +70,27 @@ export default function HomeScreen() {
   const testScheduledTime = nextDose?.time ?? testMedication?.reminderTimes[0];
 
   useEffect(() => subscribeToReminderIntents(setReminderIntent), []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadProfile() {
+      const session = await ensureAnonymousSession();
+      if (!session.success || !session.userId) return;
+
+      const profile = await getProfile(session.userId);
+      if (!mounted || !profile) return;
+
+      if (profile.display_name) {
+        setDisplayName(profile.display_name);
+      }
+    }
+
+    loadProfile().catch(console.error);
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!journey || !reminderIntent) return;
@@ -90,6 +116,28 @@ export default function HomeScreen() {
   function openReminder(medication: Medication, scheduledTime: string) {
     setReminderTarget({ medication, scheduledTime });
     setShowReminder(true);
+  }
+
+  async function markDoseTaken(medication: Medication, scheduledTime: string) {
+    const actionTakenAt = new Date().toISOString();
+
+    try {
+      await logDose({
+        medicationId: medication.id,
+        scheduledTime,
+        actionTakenAt,
+        status: 'taken',
+      });
+      await refresh();
+      Alert.alert(
+        'Đã ghi nhận',
+        'Đã cập nhật liều uống. Liều tiếp theo sẽ hiển thị ngay.',
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Không thể lưu liều uống.';
+      Alert.alert('Lỗi', message);
+      console.error(error);
+    }
   }
 
   function dismissReminder() {
@@ -198,7 +246,9 @@ export default function HomeScreen() {
         ]}>
       <View style={styles.header}>
         <View style={styles.headerCopy}>
-          <Text style={[styles.greeting, { color: theme.textSecondary }]}>Morning Ngọc 🌤️</Text>
+          <Text style={[styles.greeting, { color: theme.textSecondary }]}>
+            {getGreetingText(displayName)}
+          </Text>
           <Text style={[styles.title, { color: theme.text }]}>
             Hôm nay có{'\n'}
             {loading ? '...' : progress.total} liều nha
@@ -261,7 +311,7 @@ export default function HomeScreen() {
             </View>
             <View style={styles.nextActions}>
               <Pressable
-                onPress={() => openReminder(nextDose.medication, nextDose.time)}
+                onPress={() => void markDoseTaken(nextDose.medication, nextDose.time)}
                 style={({ pressed }) => [styles.confirmButton, pressed && styles.pressed]}>
                 <Text style={[styles.confirmText, { color: theme.primary }]}>Đã uống</Text>
               </Pressable>
@@ -269,6 +319,18 @@ export default function HomeScreen() {
                 <Text style={styles.detailText}>Chi tiết</Text>
               </Pressable>
             </View>
+          </View>
+        </View>
+      )}
+
+      {!nextDose && progress.total > 0 && progress.done === progress.total && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>Hoàn thành</Text>
+          </View>
+          <View style={[styles.completionCard, { backgroundColor: theme.primarySoft, borderColor: theme.primary }]}> 
+            <Text style={[styles.completionTitle, { color: theme.primary }]}>Chúc mừng! 🎉</Text>
+            <Text style={[styles.completionText, { color: theme.textSecondary }]}>Bạn đã hoàn thành chỉ tiêu uống thuốc hôm nay.</Text>
           </View>
         </View>
       )}
@@ -797,6 +859,23 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 16,
     paddingHorizontal: 2,
+  },
+  completionCard: {
+    borderRadius: 24,
+    borderWidth: 1,
+    gap: 10,
+    marginTop: 16,
+    padding: 18,
+  },
+  completionTitle: {
+    fontFamily: Fonts.sans,
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  completionText: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 4,
   },
   inlineLink: {
     alignItems: "center",
