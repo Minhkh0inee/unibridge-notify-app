@@ -182,7 +182,7 @@ export default function HomeScreen() {
           <Text style={[styles.greeting, { color: theme.textSecondary }]}>Morning Ngọc 🌤️</Text>
           <Text style={[styles.title, { color: theme.text }]}>
             Hôm nay có{'\n'}
-            {loading ? '...' : progress.total} cữ thuốc nha
+            {loading ? '...' : progress.total} liều nha
           </Text>
         </View>
         <Pressable
@@ -204,11 +204,11 @@ export default function HomeScreen() {
         <View style={styles.progressText}>
           <Text style={[styles.kicker, { color: theme.textSecondary }]}>Hoàn thành hôm nay</Text>
           <Text style={[styles.cardTitle, { color: theme.text }]}>
-            {progress.done}/{progress.total || 0} cữ
+            {progress.done}/{progress.total || 0} liều
           </Text>
           <Text style={[styles.bodyText, { color: theme.textSecondary }]}>
             {progress.total - progress.done > 0
-              ? `Cố lên, còn ${progress.total - progress.done} cữ nữa là xong ngày!`
+              ? `Cố lên, còn ${progress.total - progress.done} liều nữa là xong ngày!`
               : 'Xong nhiệm vụ hôm nay rồi! 🎉'}
           </Text>
         </View>
@@ -244,7 +244,7 @@ export default function HomeScreen() {
               <Pressable
                 onPress={() => openReminder(nextDose.medication, nextDose.time)}
                 style={({ pressed }) => [styles.confirmButton, pressed && styles.pressed]}>
-                <Text style={[styles.confirmText, { color: theme.primary }]}>Xong cữ này</Text>
+                <Text style={[styles.confirmText, { color: theme.primary }]}>Đã uống</Text>
               </Pressable>
               <Pressable style={({ pressed }) => [styles.detailButton, pressed && styles.pressed]}>
                 <Text style={styles.detailText}>Chi tiết</Text>
