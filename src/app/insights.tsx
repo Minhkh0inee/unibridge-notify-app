@@ -54,13 +54,18 @@ export default function InsightsScreen() {
         <View style={styles.bars}>
           {[1, 1, 0.66, 1, 1, 0.66, 0.66].map((value, index) => (
             <View key={index} style={styles.barWrap}>
-              <View style={[styles.barTrack, { backgroundColor: theme.primarySoft }]}>
+              <View style={[styles.barTrack, { backgroundColor: theme.backgroundSelected }]}>
                 <View
                   style={[
                     styles.barFill,
                     {
                       height: `${value * 100}%`,
-                      backgroundColor: value === 1 ? theme.primary : theme.warning,
+                      backgroundColor:
+                        value >= 0.9
+                          ? theme.success
+                          : value >= 0.5
+                            ? theme.warning
+                            : theme.danger,
                     },
                   ]}
                 />

@@ -298,6 +298,7 @@ export async function ensureDemoJourneyForCurrentUser(userId: string): Promise<b
       preset: 'balanced',
       prep_reminder_enabled: true,
       prep_reminder_minutes: 15,
+      carry_reminder_enabled: false,
     },
     {
       journey_id: journey.id,
@@ -313,6 +314,9 @@ export async function ensureDemoJourneyForCurrentUser(userId: string): Promise<b
       ask_later_minutes: 10,
       sound_mode: 'gentle_sound',
       preset: 'balanced',
+      prep_reminder_enabled: false,
+      prep_reminder_minutes: null,
+      carry_reminder_enabled: false,
     },
     {
       journey_id: journey.id,
@@ -328,6 +332,8 @@ export async function ensureDemoJourneyForCurrentUser(userId: string): Promise<b
       ask_later_minutes: 5,
       sound_mode: 'escalating_sound',
       preset: 'assertive',
+      prep_reminder_enabled: false,
+      prep_reminder_minutes: null,
       carry_reminder_enabled: true,
     },
   ]);
@@ -438,6 +444,66 @@ export async function getMedicationsByJourney(
   }
 
   return data ?? [];
+}
+
+export async function createDoseMedicationsWithSchedules(input: {
+  userId: string;
+  journeyId: string;
+  medications: {
+    name: string;
+    dosage: string;
+    instructions: string | null;
+  }[];
+  schedules: {
+    period: MedicationSchedule['period'];
+    targetTime: string;
+    windowStart: string;
+    windowEnd: string;
+  }[];
+}): Promise<MedicationEntity[]> {
+  const startDate = toDateKey(new Date());
+  const { data: medications, error: medicationError } = await supabase
+    .from('medications')
+    .insert(input.medications.map((medication) => ({
+      journey_id: input.journeyId,
+      user_id: input.userId,
+      name: medication.name,
+      dosage: medication.dosage,
+      instructions: medication.instructions,
+      start_date: startDate,
+      status: 'active',
+    })))
+    .select('*');
+
+  if (medicationError || !medications?.length) {
+    throw new Error(medicationError?.message ?? 'Không thể tạo các thuốc trong liều.');
+  }
+
+  const { error: schedulesError } = await supabase
+    .from('medication_schedules')
+    .insert(
+      medications.flatMap((medication) =>
+        input.schedules.map((schedule) => ({
+          medication_id: medication.id,
+          journey_id: input.journeyId,
+          user_id: input.userId,
+          period: schedule.period,
+          target_time: schedule.targetTime,
+          window_start: schedule.windowStart,
+          window_end: schedule.windowEnd,
+        }))
+      )
+    );
+
+  if (schedulesError) {
+    await supabase
+      .from('medications')
+      .delete()
+      .in('id', medications.map((medication) => medication.id));
+    throw new Error(schedulesError.message);
+  }
+
+  return medications;
 }
 
 // ============================================================================

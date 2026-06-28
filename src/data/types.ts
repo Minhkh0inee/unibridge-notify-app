@@ -1,5 +1,12 @@
 // Legacy types (kept for backward compatibility during migration)
-export type DoseStatus = 'taken' | 'ignored' | 'pending';
+export type DoseStatus =
+  | 'taken'
+  | 'ignored'
+  | 'skipped'
+  | 'pending'
+  | 'late'
+  | 'missed'
+  | 'delayed';
 
 export interface EscalationConfig {
   startGentleSeconds: number;

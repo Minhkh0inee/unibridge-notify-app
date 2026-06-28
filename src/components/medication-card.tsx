@@ -12,19 +12,35 @@ const periodIcon: Record<ScheduledDose['period'], AppIconName> = {
   Tối: 'moon',
 };
 
-const statusText: Record<ScheduledDose['status'], { label: string; icon: AppIconName; tone: 'success' | 'warning' | 'primary' | 'danger' | 'muted' }> = {
+interface StatusMeta {
+  label: string;
+  icon: AppIconName;
+  tone: 'success' | 'warning' | 'primary' | 'danger' | 'muted';
+}
+
+const fallbackStatus: StatusMeta = {
+  label: 'Chờ uống',
+  icon: 'clock',
+  tone: 'primary',
+};
+
+const statusText: Partial<Record<ScheduledDose['status'], StatusMeta>> = {
   taken: { label: 'Đã uống', icon: 'check', tone: 'success' },
   ignored: { label: 'Bỏ qua', icon: 'warning', tone: 'danger' },
+  skipped: { label: 'Bỏ qua', icon: 'warning', tone: 'danger' },
   pending: { label: 'Chờ uống', icon: 'clock', tone: 'primary' },
   upcoming: { label: 'Sắp tới', icon: 'clock', tone: 'muted' },
   late: { label: 'Trễ', icon: 'warning', tone: 'warning' },
+  missed: { label: 'Đã lỡ', icon: 'warning', tone: 'danger' },
+  delayed: { label: 'Trì hoãn', icon: 'clock', tone: 'warning' },
 };
 
 export function MedicationCard({ dose }: { dose: ScheduledDose }) {
   const theme = useTheme();
-  const status = statusText[dose.status];
-  const iconColor = getToneColor(dose.tone, theme);
-  const iconBg = getToneSoftColor(dose.tone, theme);
+  const status = statusText[dose.status] ?? fallbackStatus;
+  const tone = dose.tone ?? 'primary';
+  const iconColor = getToneColor(tone, theme);
+  const iconBg = getToneSoftColor(tone, theme);
   const badgeColor = status.tone === 'muted' ? theme.textSecondary : getToneColor(status.tone, theme);
   const badgeBg = status.tone === 'muted' ? theme.backgroundSelected : getToneSoftColor(status.tone, theme);
   const muted = dose.status === 'taken';

@@ -118,9 +118,9 @@ function notificationContent(
   };
 
   return {
-    title: '💊 Time for your medicine',
+    title: '💊 Đến giờ uống thuốc',
     subtitle: `${medication.name} · ${scheduledTime}`,
-    body: `Take ${medication.dosage}. Open this reminder to confirm your dose.`,
+    body: `Uống ${medication.dosage}. Mở lời nhắc để xác nhận liều thuốc.`,
     data,
     sound: 'default',
     categoryIdentifier: MEDICATION_CATEGORY_ID,
@@ -228,8 +228,8 @@ export async function scheduleTestCarryNotificationAsync(): Promise<Date> {
   const scheduledFor = new Date(Date.now() + 10_000);
   await Notifications.scheduleNotificationAsync({
     content: {
-      title: '🎒 Bag check!',
-      body: "Don't forget to pack your meds before you head out today.",
+      title: '🎒 Nhớ mang thuốc nhé!',
+      body: 'Đừng quên mang theo thuốc trước khi bạn ra ngoài hôm nay.',
       sound: 'default',
     },
     trigger: {

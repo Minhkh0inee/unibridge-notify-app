@@ -58,15 +58,27 @@ export default function JourneyScreen() {
     loading,
     error,
     setSelectedDate,
-    goToNextMonth,
-    goToPrevMonth,
+    goToNextWeek,
+    goToPrevWeek,
     refresh,
   } = useCalendar();
 
   const selectedDateParts = parseDateKey(selectedDate);
   const monthTitle = formatMonthTitle(selectedDate);
   const selectedTitle = formatSelectedDate(selectedDate);
-  const firstDayOffset = month[0] ? getMondayFirstOffset(month[0].date) : 0;
+  const week = getWeekDateKeys(selectedDate).map((date) => {
+    const calendarDay = month.find((day) => day.date === date);
+    return (
+      calendarDay ?? {
+        date,
+        status: 'none' as const,
+        totalDoses: 0,
+        takenDoses: 0,
+        lateDoses: 0,
+        missedDoses: 0,
+      }
+    );
+  });
   const selectedSession = sheetPeriod
     ? agenda?.sessions.find((session) => session.period === sheetPeriod) ?? null
     : null;
@@ -89,14 +101,14 @@ export default function JourneyScreen() {
           },
         ]}>
         <View style={styles.monthHeader}>
-          <RoundButton icon="back" onPress={goToPrevMonth} label="Tháng trước" />
+          <RoundButton icon="back" onPress={goToPrevWeek} label="Tuần trước" />
           <View style={styles.monthTitleWrap}>
             <Text style={[styles.monthTitle, { color: theme.text }]}>{monthTitle}</Text>
             <Text style={[styles.monthSubtitle, { color: theme.textSecondary }]}>
               Guest session · Synced
             </Text>
           </View>
-          <RoundButton icon="chevronRight" onPress={goToNextMonth} label="Tháng sau" />
+          <RoundButton icon="chevronRight" onPress={goToNextWeek} label="Tuần sau" />
         </View>
 
         {error && (
@@ -119,12 +131,8 @@ export default function JourneyScreen() {
           ))}
         </View>
 
-        <View style={styles.calendarGrid}>
-          {Array.from({ length: firstDayOffset }, (_, index) => (
-            <View key={`blank-${index}`} style={styles.dayPlaceholder} />
-          ))}
-
-          {month.map((day) => (
+        <View style={styles.weekRow}>
+          {week.map((day) => (
             <CalendarDayCell
               key={day.date}
               date={day.date}
@@ -722,16 +730,25 @@ function parseDateKey(date: string) {
   return { year, month, day };
 }
 
-function getMondayFirstOffset(date: string) {
-  const { year, month } = parseDateKey(date);
-  return (new Date(year, month - 1, 1).getDay() + 6) % 7;
-}
-
 function toDateKey(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+function getWeekDateKeys(date: string) {
+  const { year, month, day } = parseDateKey(date);
+  const selected = new Date(year, month - 1, day);
+  const mondayOffset = (selected.getDay() + 6) % 7;
+  const monday = new Date(selected);
+  monday.setDate(selected.getDate() - mondayOffset);
+
+  return Array.from({ length: 7 }, (_, index) => {
+    const current = new Date(monday);
+    current.setDate(monday.getDate() + index);
+    return toDateKey(current);
+  });
 }
 
 function formatMonthTitle(date: string) {
@@ -742,14 +759,6 @@ function formatMonthTitle(date: string) {
 function formatSelectedDate(date: string) {
   const { day, month } = parseDateKey(date);
   return `ngày ${day}/${month}`;
-}
-
-function toSheetLayout(layout: TimeFieldLayout, sheetLayout: TimeFieldLayout): TimeFieldLayout {
-  return {
-    ...layout,
-    x: layout.x + 0,
-    y: layout.y + sheetLayout.y,
-  };
 }
 
 function getTimeOptions(period: Period, field: TimeFieldKey) {
@@ -847,23 +856,19 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textAlign: 'center',
   },
-  calendarGrid: {
+  weekRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 6,
-  },
-  dayPlaceholder: {
-    aspectRatio: 1,
-    width: `${(100 - 6 * 6) / 7}%`,
   },
   dayCell: {
     alignItems: 'center',
     aspectRatio: 1,
     borderRadius: 16,
     borderWidth: 1,
+    flex: 1,
     justifyContent: 'center',
     minHeight: 44,
-    width: `${(100 - 6 * 6) / 7}%`,
+    minWidth: 0,
   },
   dayText: {
     fontSize: 14,

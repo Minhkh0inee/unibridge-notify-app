@@ -21,6 +21,8 @@ interface UseCalendarResult {
   setSelectedDate: (date: string) => void;
   goToNextMonth: () => void;
   goToPrevMonth: () => void;
+  goToNextWeek: () => void;
+  goToPrevWeek: () => void;
   refresh: () => Promise<void>;
 }
 
@@ -121,6 +123,18 @@ export function useCalendar(initialDate?: string): UseCalendarResult {
     setSelectedDate(toDateKey(prev));
   }
 
+  function goToNextWeek() {
+    const next = new Date(currentDate);
+    next.setDate(next.getDate() + 7);
+    setSelectedDate(toDateKey(next));
+  }
+
+  function goToPrevWeek() {
+    const prev = new Date(currentDate);
+    prev.setDate(prev.getDate() - 7);
+    setSelectedDate(toDateKey(prev));
+  }
+
   async function refresh() {
     await loadCalendarData();
   }
@@ -134,6 +148,8 @@ export function useCalendar(initialDate?: string): UseCalendarResult {
     setSelectedDate,
     goToNextMonth,
     goToPrevMonth,
+    goToNextWeek,
+    goToPrevWeek,
     refresh,
   };
 }
